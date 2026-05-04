@@ -1,0 +1,189 @@
+// SMKTTH Classroom LMS — Prisma Schema
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String
+  password     String
+  role         String     @default("siswa") // admin, guru, siswa
+  avatar       String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  classUsers     ClassUser[]
+  createdClasses Class[]      @relation("ClassCreator")
+  assignments    Assignment[] @relation("AssignmentCreator")
+  submissions    Submission[]
+  announcements  Announcement[] @relation("AnnouncementCreator")
+  comments       Comment[]
+  notifications  Notification[]
+  attendance     Attendance[]
+  createdResources Resource[]
+}
+
+model Class {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  code        String   @unique
+  subjectId   String?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subject       Subject?   @relation(fields: [subjectId], references: [id])
+  creator       User       @relation("ClassCreator", fields: [createdBy], references: [id])
+  classUsers    ClassUser[]
+  assignments   Assignment[]
+  announcements Announcement[]
+  resources     Resource[]
+  attendance    Attendance[]
+}
+
+model ClassUser {
+  id        String   @id @default(cuid())
+  classId   String
+  userId    String
+  role      String   @default("siswa") // guru, siswa
+  joinedAt  DateTime @default(now())
+
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, userId])
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String?
+  createdAt DateTime @default(now())
+
+  classes     Class[]
+  assignments Assignment[]
+}
+
+model Assignment {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  classId     String
+  subjectId   String?
+  dueDate     DateTime
+  points      Int      @default(100)
+  type        String   @default("tugas") // tugas, ujian, kuis
+  status      String   @default("active") // active, closed, draft
+  attachments String?  // JSON string
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  class       Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
+  subject     Subject?    @relation(fields: [subjectId], references: [id])
+  creator     User        @relation("AssignmentCreator", fields: [createdBy], references: [id])
+  submissions Submission[]
+  comments    Comment[]
+}
+
+model Submission {
+  id           String   @id @default(cuid())
+  assignmentId String
+  userId       String
+  content      String?
+  fileUrl      String?
+  status       String   @default("submitted") // submitted, graded, late, draft
+  grade        Float?
+  feedback     String?
+  submittedAt  DateTime @default(now())
+  gradedAt     DateTime?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, userId])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  classId   String
+  priority  String   @default("normal") // low, normal, high
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  class    Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  creator  User     @relation("AnnouncementCreator", fields: [createdBy], references: [id])
+  comments Comment[]
+}
+
+model Comment {
+  id             String   @id @default(cuid())
+  content        String
+  userId         String
+  announcementId String?
+  assignmentId   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  announcement Announcement? @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  assignment   Assignment?   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("info") // info, warning, success, error
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Resource {
+  id        String   @id @default(cuid())
+  title     String
+  fileUrl   String
+  fileType  String   @default("pdf")
+  classId   String
+  uploadedBy String
+  createdAt DateTime @default(now())
+
+  class    Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  uploader User  @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  classId   String
+  userId    String
+  date      DateTime
+  status    String   @default("hadir") // hadir, tidak, terlambat
+  createdAt DateTime @default(now())
+
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, userId, date])
+}
