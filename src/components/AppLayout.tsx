@@ -6,7 +6,8 @@ import {
   Menu, X, Sun, Moon, Bell, User, LogOut,
   LayoutDashboard, BookOpen, FileText, Calendar, MessageSquare,
   ClipboardCheck, Settings, Users, FolderOpen,
-  GraduationCap, Lock, ChevronDown, TrendingUp
+  GraduationCap, Lock, ChevronDown, TrendingUp,
+  CalendarDays, Activity
 } from 'lucide-react'
 import { useAppStore, type PageName } from '@/lib/store'
 import { useTheme } from 'next-themes'
@@ -29,18 +30,22 @@ import AdminSettingsPage from '@/components/pages/AdminSettingsPage'
 import UserManagementPage from '@/components/pages/UserManagementPage'
 import LearningResourcesPage from '@/components/pages/LearningResourcesPage'
 import ProgressAnalyticsPage from '@/components/pages/ProgressAnalyticsPage'
+import SchedulePage from '@/components/pages/SchedulePage'
+import SystemHealthPage from '@/components/pages/SystemHealthPage'
 
 const NAV_ITEMS: { page: PageName; label: string; icon: React.ElementType; roles?: string[]; roleLabels?: Record<string, string> }[] = [
   { page: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { page: 'classes', label: 'Kelas', icon: BookOpen },
   { page: 'my-submissions', label: 'Submissions', icon: FileText },
   { page: 'progress-analytics', label: 'Progres Belajar', icon: TrendingUp, roleLabels: { guru: 'Analitik', admin: 'Analitik', siswa: 'Progres Belajar' } },
+  { page: 'schedule', label: 'Jadwal', icon: CalendarDays },
   { page: 'calendar', label: 'Kalender', icon: Calendar },
   { page: 'discussions', label: 'Diskusi', icon: MessageSquare },
   { page: 'attendance', label: 'Absensi', icon: ClipboardCheck },
   { page: 'learning-resources', label: 'Sumber Belajar', icon: FolderOpen },
   { page: 'admin-settings', label: 'Pengaturan', icon: Settings, roles: ['admin'] },
   { page: 'user-management', label: 'Manajemen User', icon: Users, roles: ['admin'] },
+  { page: 'system-health', label: 'Kesehatan Sistem', icon: Activity, roles: ['admin'] },
 ]
 
 function ThemeToggle() {
@@ -88,6 +93,8 @@ function PageRenderer() {
     'user-management': UserManagementPage,
     'learning-resources': LearningResourcesPage,
     'progress-analytics': ProgressAnalyticsPage,
+    schedule: SchedulePage,
+    'system-health': SystemHealthPage,
   }
 
   const Page = pages[currentPage] || DashboardPage
@@ -276,7 +283,7 @@ function AppLayoutInner() {
           {[
             { page: 'dashboard' as PageName, label: 'Dashboard', icon: LayoutDashboard },
             { page: 'classes' as PageName, label: 'Kelas', icon: BookOpen },
-            { page: 'progress-analytics' as PageName, label: 'Progres', icon: TrendingUp },
+            { page: 'schedule' as PageName, label: 'Jadwal', icon: CalendarDays },
             { page: 'attendance' as PageName, label: 'Absensi', icon: ClipboardCheck },
             { page: 'profile' as PageName, label: 'Profil', icon: User },
           ].map((item) => {

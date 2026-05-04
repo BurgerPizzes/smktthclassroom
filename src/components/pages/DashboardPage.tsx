@@ -566,7 +566,7 @@ export default function DashboardPage() {
         <h2 className="text-lg font-semibold text-[var(--glass-text)] mb-4">Aksi Cepat</h2>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {[
-            { icon: FileText, label: 'Buat Tugas', page: 'classes' as const, color: 'from-blue-500 to-cyan-500' },
+            ...(isGuru ? [{ icon: FileText, label: 'Buat Tugas', page: 'classes' as const, color: 'from-blue-500 to-cyan-500' }] : []),
             { icon: ClipboardCheck, label: 'Lihat Absensi', page: 'attendance' as const, color: 'from-emerald-500 to-green-500' },
             { icon: MessageSquare, label: 'Diskusi', page: 'discussions' as const, color: 'from-purple-500 to-pink-500' },
             { icon: BookOpen, label: 'Kelas Saya', page: 'classes' as const, color: 'from-amber-500 to-orange-500' },

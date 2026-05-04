@@ -251,6 +251,48 @@ async function seed() {
 
   console.log('  ✅ Attendance records created')
 
+  // ═══ Schedules ═══
+  // dayOfWeek: 1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jumat, 6=Sabtu, 7=Minggu
+  const scheduleData = [
+    // Class 1 (XII RPL 1) — Pemrograman
+    { classId: class1.id, subject: 'Pemrograman Web', dayOfWeek: 1, startTime: '07:00', endTime: '08:30', room: 'Lab RPL 1', createdBy: guru1.id },
+    { classId: class1.id, subject: 'Basis Data', dayOfWeek: 1, startTime: '08:30', endTime: '10:00', room: 'Lab RPL 1', createdBy: guru1.id },
+    { classId: class1.id, subject: 'Pemrograman Mobile', dayOfWeek: 2, startTime: '07:00', endTime: '08:30', room: 'Lab RPL 2', createdBy: guru1.id },
+    { classId: class1.id, subject: 'Pemrograman Web', dayOfWeek: 3, startTime: '09:30', endTime: '11:00', room: 'Lab RPL 1', createdBy: guru1.id },
+    { classId: class1.id, subject: 'Pemrograman Mobile', dayOfWeek: 4, startTime: '07:00', endTime: '08:30', room: 'Lab RPL 2', createdBy: guru1.id },
+    { classId: class1.id, subject: 'Basis Data', dayOfWeek: 5, startTime: '08:30', endTime: '10:00', room: 'Lab RPL 1', createdBy: guru1.id },
+
+    // Class 2 (XII TKJ 1) — Jaringan
+    { classId: class2.id, subject: 'Konfigurasi Jaringan', dayOfWeek: 1, startTime: '09:30', endTime: '11:00', room: 'Lab Jaringan', createdBy: guru2.id },
+    { classId: class2.id, subject: 'Sistem Komputer', dayOfWeek: 2, startTime: '09:30', endTime: '11:00', room: 'Ruang Teori 2', createdBy: guru2.id },
+    { classId: class2.id, subject: 'Konfigurasi Jaringan', dayOfWeek: 3, startTime: '07:00', endTime: '08:30', room: 'Lab Jaringan', createdBy: guru2.id },
+    { classId: class2.id, subject: 'Administrasi Jaringan', dayOfWeek: 4, startTime: '09:30', endTime: '11:00', room: 'Lab Jaringan', createdBy: guru2.id },
+    { classId: class2.id, subject: 'Sistem Komputer', dayOfWeek: 5, startTime: '07:00', endTime: '08:30', room: 'Ruang Teori 2', createdBy: guru2.id },
+
+    // Class 3 (XII MM 1) — Multimedia
+    { classId: class3.id, subject: 'Desain Grafis', dayOfWeek: 1, startTime: '13:00', endTime: '14:30', room: 'Lab Multimedia', createdBy: guru3.id },
+    { classId: class3.id, subject: 'Animasi 2D', dayOfWeek: 2, startTime: '13:00', endTime: '14:30', room: 'Lab Multimedia', createdBy: guru3.id },
+    { classId: class3.id, subject: 'Desain Grafis', dayOfWeek: 3, startTime: '13:00', endTime: '14:30', room: 'Lab Multimedia', createdBy: guru3.id },
+    { classId: class3.id, subject: 'Produksi Video', dayOfWeek: 4, startTime: '13:00', endTime: '14:30', room: 'Studio', createdBy: guru3.id },
+    { classId: class3.id, subject: 'Animasi 2D', dayOfWeek: 5, startTime: '13:00', endTime: '14:30', room: 'Lab Multimedia', createdBy: guru3.id },
+  ]
+
+  for (const s of scheduleData) {
+    await db.schedule.upsert({
+      where: {
+        classId_dayOfWeek_startTime: {
+          classId: s.classId,
+          dayOfWeek: s.dayOfWeek,
+          startTime: s.startTime,
+        },
+      },
+      update: {},
+      create: s,
+    })
+  }
+
+  console.log('  ✅ Schedules created')
+
   console.log('\n🎉 Seed completed successfully!')
   console.log('\n📋 Demo Accounts:')
   console.log('  Admin: admin@smktth.sch.id / admin123')

@@ -4,7 +4,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, ChevronRight, Calendar as CalendarIcon,
-  FileText, Clock, X, AlertTriangle, Timer, BookOpen, FlaskConical, Zap
+  FileText, Clock, X, AlertTriangle, Timer, BookOpen, FlaskConical, Zap,
+  BarChart3, Hash
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay, isToday, differenceInDays } from 'date-fns'
@@ -20,7 +21,7 @@ interface Assignment {
   class: { name: string }
 }
 
-const TYPE_STYLES: Record<string, { bg: string; text: string; border: string; dot: string; icon: React.ElementType; badge: string }> = {
+const TYPE_STYLES: Record<string, { bg: string; text: string; border: string; dot: string; icon: React.ElementType; badge: string; miniDot: string }> = {
   tugas: {
     bg: 'bg-[var(--badge-blue-bg)]',
     text: 'text-[var(--badge-blue-text)]',
@@ -28,6 +29,7 @@ const TYPE_STYLES: Record<string, { bg: string; text: string; border: string; do
     dot: 'bg-blue-500',
     icon: FileText,
     badge: 'bg-blue-500 text-white',
+    miniDot: 'bg-blue-400',
   },
   ujian: {
     bg: 'bg-[var(--badge-red-bg)]',
@@ -36,6 +38,7 @@ const TYPE_STYLES: Record<string, { bg: string; text: string; border: string; do
     dot: 'bg-red-500',
     icon: AlertTriangle,
     badge: 'bg-red-500 text-white',
+    miniDot: 'bg-red-400',
   },
   kuis: {
     bg: 'bg-[var(--badge-amber-bg)]',
@@ -44,6 +47,7 @@ const TYPE_STYLES: Record<string, { bg: string; text: string; border: string; do
     dot: 'bg-amber-500',
     icon: Zap,
     badge: 'bg-amber-500 text-white',
+    miniDot: 'bg-amber-400',
   },
   TUGAS: {
     bg: 'bg-[var(--badge-blue-bg)]',
@@ -52,6 +56,7 @@ const TYPE_STYLES: Record<string, { bg: string; text: string; border: string; do
     dot: 'bg-blue-500',
     icon: FileText,
     badge: 'bg-blue-500 text-white',
+    miniDot: 'bg-blue-400',
   },
   UJIAN: {
     bg: 'bg-[var(--badge-red-bg)]',
@@ -60,6 +65,7 @@ const TYPE_STYLES: Record<string, { bg: string; text: string; border: string; do
     dot: 'bg-red-500',
     icon: AlertTriangle,
     badge: 'bg-red-500 text-white',
+    miniDot: 'bg-red-400',
   },
   KUIS: {
     bg: 'bg-[var(--badge-amber-bg)]',
@@ -68,6 +74,7 @@ const TYPE_STYLES: Record<string, { bg: string; text: string; border: string; do
     dot: 'bg-amber-500',
     icon: Zap,
     badge: 'bg-amber-500 text-white',
+    miniDot: 'bg-amber-400',
   },
 }
 
@@ -84,6 +91,24 @@ function getCountdownInfo(dueDate: Date) {
   if (diffDays <= 3) return { text: `${diffDays} hari lagi`, color: 'text-[var(--badge-amber-text)]', bg: 'bg-[var(--badge-amber-bg)]', urgent: true, overdue: false }
   if (diffDays <= 7) return { text: `${diffDays} hari lagi`, color: 'text-[var(--badge-blue-text)]', bg: 'bg-[var(--badge-blue-bg)]', urgent: false, overdue: false }
   return { text: format(dueDate, 'dd MMM', { locale: localeId }), color: 'text-[var(--glass-text-muted)]', bg: 'bg-[var(--chip-bg)]', urgent: false, overdue: false }
+}
+
+// Estimate event duration based on type and points
+function getEventDuration(type: string, points: number): string {
+  const lowerType = type?.toLowerCase() || 'tugas'
+  if (lowerType === 'ujian') {
+    if (points > 80) return '3 jam'
+    if (points > 50) return '2 jam'
+    return '1.5 jam'
+  }
+  if (lowerType === 'kuis') {
+    if (points > 50) return '1 jam'
+    return '30 menit'
+  }
+  // tugas
+  if (points > 80) return '2 minggu'
+  if (points > 50) return '1 minggu'
+  return '3 hari'
 }
 
 export default function CalendarPage() {
@@ -132,6 +157,22 @@ export default function CalendarPage() {
       .slice(0, 8)
   }, [assignments])
 
+  // Monthly stats
+  const monthlyStats = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth)
+    const monthEnd = endOfMonth(currentMonth)
+    const monthAssignments = assignments.filter((a) => {
+      const d = new Date(a.dueDate)
+      return d >= monthStart && d <= monthEnd
+    })
+    return {
+      tugas: monthAssignments.filter(a => a.type.toLowerCase() === 'tugas').length,
+      ujian: monthAssignments.filter(a => a.type.toLowerCase() === 'ujian').length,
+      kuis: monthAssignments.filter(a => a.type.toLowerCase() === 'kuis').length,
+      total: monthAssignments.length,
+    }
+  }, [assignments, currentMonth])
+
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
@@ -174,6 +215,33 @@ export default function CalendarPage() {
           >
             <ChevronRight className="w-4 h-4" />
           </button>
+        </div>
+      </div>
+
+      {/* Mini Stats Bar */}
+      <div className="mini-stats-bar flex-wrap">
+        <div className="mini-stats-item">
+          <FileText className="w-4 h-4 text-blue-500" />
+          <span className="text-[var(--badge-blue-text)]">{monthlyStats.tugas}</span>
+          <span className="text-[var(--glass-text-muted)] font-normal">Tugas</span>
+        </div>
+        <div className="mini-stats-divider" />
+        <div className="mini-stats-item">
+          <AlertTriangle className="w-4 h-4 text-red-500" />
+          <span className="text-[var(--badge-red-text)]">{monthlyStats.ujian}</span>
+          <span className="text-[var(--glass-text-muted)] font-normal">Ujian</span>
+        </div>
+        <div className="mini-stats-divider" />
+        <div className="mini-stats-item">
+          <Zap className="w-4 h-4 text-amber-500" />
+          <span className="text-[var(--badge-amber-text)]">{monthlyStats.kuis}</span>
+          <span className="text-[var(--glass-text-muted)] font-normal">Kuis</span>
+        </div>
+        <div className="mini-stats-divider" />
+        <div className="mini-stats-item">
+          <BarChart3 className="w-4 h-4 text-purple-500" />
+          <span className="text-[var(--badge-purple-text)]">{monthlyStats.total}</span>
+          <span className="text-[var(--glass-text-muted)] font-normal">Total</span>
         </div>
       </div>
 
@@ -221,7 +289,6 @@ export default function CalendarPage() {
                   const diff = differenceInDays(new Date(a.dueDate), new Date())
                   return diff >= 0 && diff <= 2
                 })
-                const hasOverdue = dayAssignments.some((a) => differenceInDays(new Date(a.dueDate), new Date()) < 0)
 
                 return (
                   <motion.button
@@ -243,7 +310,7 @@ export default function CalendarPage() {
                       {format(day, 'd')}
                     </span>
                     {dayAssignments.length > 0 && (
-                      <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center">
+                      <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center items-center">
                         {dayAssignments.slice(0, 3).map((a, i) => {
                           const style = TYPE_STYLES[a.type] || DEFAULT_STYLE
                           return (
@@ -253,6 +320,12 @@ export default function CalendarPage() {
                             />
                           )
                         })}
+                        {/* Small colored type indicator dots alongside event dots */}
+                        {dayAssignments.length > 3 && (
+                          <span className={`text-[6px] font-bold ${isSelected ? 'text-white/70' : 'text-[var(--glass-text-muted)]'}`}>
+                            +{dayAssignments.length - 3}
+                          </span>
+                        )}
                       </div>
                     )}
                   </motion.button>
@@ -286,6 +359,7 @@ export default function CalendarPage() {
                       const style = TYPE_STYLES[a.type] || DEFAULT_STYLE
                       const TypeIcon = style.icon
                       const countdown = getCountdownInfo(new Date(a.dueDate))
+                      const duration = getEventDuration(a.type, a.points)
 
                       return (
                         <div
@@ -298,7 +372,13 @@ export default function CalendarPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-[var(--glass-text)] font-medium truncate">{a.title}</p>
-                            <p className="text-xs text-[var(--glass-text-muted)]">{a.class.name} • {a.points} poin</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <p className="text-xs text-[var(--glass-text-muted)]">{a.class.name} • {a.points} poin</p>
+                              <span className="event-duration">
+                                <Clock className="event-duration-icon" />
+                                {duration}
+                              </span>
+                            </div>
                           </div>
                           <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${countdown.bg} ${countdown.color} ${countdown.urgent ? 'countdown-urgent' : ''}`}>
                             {countdown.text}
@@ -327,6 +407,7 @@ export default function CalendarPage() {
                   const style = TYPE_STYLES[a.type] || DEFAULT_STYLE
                   const TypeIcon = style.icon
                   const countdown = getCountdownInfo(new Date(a.dueDate))
+                  const duration = getEventDuration(a.type, a.points)
 
                   return (
                     <motion.div
@@ -348,9 +429,15 @@ export default function CalendarPage() {
                               <Clock className="w-3 h-3" />
                               {format(new Date(a.dueDate), 'dd MMM', { locale: localeId })}
                             </span>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${countdown.bg} ${countdown.color} ${countdown.urgent ? 'countdown-urgent' : ''}`}>
-                              {countdown.text}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="event-duration">
+                                <Clock className="event-duration-icon" />
+                                {duration}
+                              </span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${countdown.bg} ${countdown.color} ${countdown.urgent ? 'countdown-urgent' : ''}`}>
+                                {countdown.text}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -371,16 +458,16 @@ export default function CalendarPage() {
             <h3 className="font-semibold text-[var(--glass-text)] text-sm mb-3">Ringkasan Bulan Ini</h3>
             <div className="space-y-2.5">
               {[
-                { label: 'Tugas', count: assignments.filter(a => a.type.toLowerCase() === 'tugas').length, color: 'bg-blue-500', bg: 'bg-[var(--badge-blue-bg)]' },
-                { label: 'Ujian', count: assignments.filter(a => a.type.toLowerCase() === 'ujian').length, color: 'bg-red-500', bg: 'bg-[var(--badge-red-bg)]' },
-                { label: 'Kuis', count: assignments.filter(a => a.type.toLowerCase() === 'kuis').length, color: 'bg-amber-500', bg: 'bg-[var(--badge-amber-bg)]' },
+                { label: 'Tugas', count: monthlyStats.tugas, color: 'bg-blue-500', bg: 'bg-[var(--badge-blue-bg)]', text: 'text-[var(--badge-blue-text)]' },
+                { label: 'Ujian', count: monthlyStats.ujian, color: 'bg-red-500', bg: 'bg-[var(--badge-red-bg)]', text: 'text-[var(--badge-red-text)]' },
+                { label: 'Kuis', count: monthlyStats.kuis, color: 'bg-amber-500', bg: 'bg-[var(--badge-amber-bg)]', text: 'text-[var(--badge-amber-text)]' },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
                     <span className="text-xs text-[var(--glass-text-secondary)]">{item.label}</span>
                   </div>
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${item.bg} text-[var(--glass-text)]`}>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${item.bg} ${item.text}`}>
                     {item.count}
                   </span>
                 </div>

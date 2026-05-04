@@ -6,7 +6,8 @@ import {
   BookOpen, FileText, Users, Bell, Plus, ArrowLeft,
   Megaphone, Clock, Send, MessageSquare, X, Search,
   Pin, Heart, Trash2, AlertTriangle, Zap, Calendar,
-  UserMinus, Shield, GraduationCap, Share2, ThumbsUp, PartyPopper
+  UserMinus, Shield, GraduationCap, Share2, ThumbsUp, PartyPopper,
+  Paperclip, TrendingUp
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format, formatDistanceToNow } from 'date-fns'
@@ -26,13 +27,19 @@ interface ClassData {
 
 type TabName = 'stream' | 'tugas' | 'anggota'
 
-const TYPE_STYLES: Record<string, { icon: React.ElementType; bg: string; text: string; border: string; badge: string; iconBg: string }> = {
-  tugas: { icon: FileText, bg: 'from-blue-500/10 to-cyan-500/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-500/20', badge: 'bg-[var(--badge-blue-bg)] text-[var(--badge-blue-text)]', iconBg: 'bg-[var(--badge-blue-bg)]' },
-  ujian: { icon: AlertTriangle, bg: 'from-red-500/10 to-rose-500/10', text: 'text-red-600 dark:text-red-400', border: 'border-red-500/20', badge: 'bg-[var(--badge-red-bg)] text-[var(--badge-red-text)]', iconBg: 'bg-[var(--badge-red-bg)]' },
-  kuis: { icon: Zap, bg: 'from-amber-500/10 to-orange-500/10', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/20', badge: 'bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]', iconBg: 'bg-[var(--badge-amber-bg)]' },
-  TUGAS: { icon: FileText, bg: 'from-blue-500/10 to-cyan-500/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-500/20', badge: 'bg-[var(--badge-blue-bg)] text-[var(--badge-blue-text)]', iconBg: 'bg-[var(--badge-blue-bg)]' },
-  UJIAN: { icon: AlertTriangle, bg: 'from-red-500/10 to-rose-500/10', text: 'text-red-600 dark:text-red-400', border: 'border-red-500/20', badge: 'bg-[var(--badge-red-bg)] text-[var(--badge-red-text)]', iconBg: 'bg-[var(--badge-red-bg)]' },
-  KUIS: { icon: Zap, bg: 'from-amber-500/10 to-orange-500/10', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/20', badge: 'bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]', iconBg: 'bg-[var(--badge-amber-bg)]' },
+const TYPE_STYLES: Record<string, { icon: React.ElementType; bg: string; text: string; border: string; badge: string; iconBg: string; gradient: string; progressColor: string }> = {
+  tugas: { icon: FileText, bg: 'from-blue-500/10 to-cyan-500/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-500/20', badge: 'bg-[var(--badge-blue-bg)] text-[var(--badge-blue-text)]', iconBg: 'bg-[var(--badge-blue-bg)]', gradient: 'from-blue-500 to-cyan-500', progressColor: 'bg-blue-500' },
+  ujian: { icon: AlertTriangle, bg: 'from-red-500/10 to-rose-500/10', text: 'text-red-600 dark:text-red-400', border: 'border-red-500/20', badge: 'bg-[var(--badge-red-bg)] text-[var(--badge-red-text)]', iconBg: 'bg-[var(--badge-red-bg)]', gradient: 'from-red-500 to-rose-500', progressColor: 'bg-red-500' },
+  kuis: { icon: Zap, bg: 'from-amber-500/10 to-orange-500/10', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/20', badge: 'bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]', iconBg: 'bg-[var(--badge-amber-bg)]', gradient: 'from-amber-500 to-orange-500', progressColor: 'bg-amber-500' },
+  TUGAS: { icon: FileText, bg: 'from-blue-500/10 to-cyan-500/10', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-500/20', badge: 'bg-[var(--badge-blue-bg)] text-[var(--badge-blue-text)]', iconBg: 'bg-[var(--badge-blue-bg)]', gradient: 'from-blue-500 to-cyan-500', progressColor: 'bg-blue-500' },
+  UJIAN: { icon: AlertTriangle, bg: 'from-red-500/10 to-rose-500/10', text: 'text-red-600 dark:text-red-400', border: 'border-red-500/20', badge: 'bg-[var(--badge-red-bg)] text-[var(--badge-red-text)]', iconBg: 'bg-[var(--badge-red-bg)]', gradient: 'from-red-500 to-rose-500', progressColor: 'bg-red-500' },
+  KUIS: { icon: Zap, bg: 'from-amber-500/10 to-orange-500/10', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/20', badge: 'bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]', iconBg: 'bg-[var(--badge-amber-bg)]', gradient: 'from-amber-500 to-orange-500', progressColor: 'bg-amber-500' },
+}
+
+function getDifficultyInfo(points: number): { label: string; className: string } {
+  if (points < 50) return { label: 'Mudah', className: 'difficulty-badge difficulty-badge-mudah' }
+  if (points <= 80) return { label: 'Sedang', className: 'difficulty-badge difficulty-badge-sedang' }
+  return { label: 'Sulit', className: 'difficulty-badge difficulty-badge-sulit' }
 }
 
 function getCountdownInfo(dueDate: string): { text: string; color: string; urgent: boolean } {
@@ -395,6 +402,10 @@ export default function ClassDetailPage() {
                     const countdown = getCountdownInfo(assignment.dueDate)
                     const isClosed = new Date(assignment.dueDate) < new Date()
                     const submissionCount = assignment._count?.submissions ?? assignment.submissionCount ?? 0
+                    const totalStudents = siswaMembers.length || 1
+                    const submissionPercent = Math.min(100, Math.round((submissionCount / totalStudents) * 100))
+                    const difficulty = getDifficultyInfo(assignment.points || 100)
+                    const hasAttachment = assignment.fileUrl || assignment.description?.includes('http') || assignment.description?.includes('attach')
 
                     return (
                       <div
@@ -404,27 +415,50 @@ export default function ClassDetailPage() {
                       >
                         <div className="flex items-start justify-between relative z-[3]">
                           <div className="flex items-start gap-3 flex-1 min-w-0">
-                            <div className={`w-9 h-9 rounded-lg ${typeStyle.iconBg} flex items-center justify-center shrink-0`}>
-                              <TypeIcon className={`w-4.5 h-4.5 ${typeStyle.text}`} />
+                            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${typeStyle.gradient} flex items-center justify-center shrink-0 shadow-md`}>
+                              <TypeIcon className="w-5 h-5 text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-[var(--glass-text)] text-sm">{assignment.title}</p>
+                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                <span className={difficulty.className}>
+                                  <TrendingUp className="w-2.5 h-2.5" />
+                                  {difficulty.label}
+                                </span>
+                                {hasAttachment && (
+                                  <span className="flex items-center gap-0.5 text-[10px] text-[var(--glass-text-muted)]">
+                                    <Paperclip className="w-3 h-3" />
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex items-center gap-3 mt-2 text-xs text-[var(--glass-text-secondary)] flex-wrap">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
                                   {format(new Date(assignment.dueDate), 'dd MMM', { locale: localeId })}
                                 </span>
                                 <span className="flex items-center gap-1">{assignment.points} poin</span>
-                                {submissionCount > 0 && (
-                                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--badge-blue-bg)] text-[var(--badge-blue-text)] font-medium">
-                                    <Users className="w-3 h-3" /> {submissionCount}
-                                  </span>
-                                )}
                               </div>
+                              {/* Submission progress bar */}
+                              {isGuru && submissionCount > 0 && (
+                                <div className="mt-2.5 space-y-1">
+                                  <div className="flex items-center justify-between text-[10px]">
+                                    <span className="text-[var(--glass-text-muted)]">{submissionCount}/{totalStudents} siswa</span>
+                                    <span className="font-medium text-[var(--glass-text-secondary)]">{submissionPercent}%</span>
+                                  </div>
+                                  <div className="submission-progress">
+                                    <motion.div
+                                      className={`submission-progress-fill ${typeStyle.progressColor}`}
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${submissionPercent}%` }}
+                                      transition={{ duration: 0.8, ease: 'easeOut' }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="flex flex-col items-end gap-1.5 shrink-0 ml-3">
-                            <span className={`text-xs px-2 py-1 rounded-lg ${typeStyle.badge} font-medium`}>
+                            <span className={`text-xs px-3 py-1.5 rounded-lg bg-gradient-to-r ${typeStyle.gradient} text-white font-semibold shadow-sm`}>
                               {assignment.type?.charAt(0).toUpperCase() + assignment.type?.slice(1)}
                             </span>
                             <span className={`text-[10px] font-medium ${countdown.color} ${countdown.urgent ? 'countdown-urgent' : ''}`}>

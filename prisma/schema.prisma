@@ -29,6 +29,7 @@ model User {
   notifications  Notification[]
   attendance     Attendance[]
   createdResources Resource[]
+  schedules      Schedule[]
 }
 
 model Class {
@@ -48,6 +49,7 @@ model Class {
   announcements Announcement[]
   resources     Resource[]
   attendance    Attendance[]
+  schedules     Schedule[]
 }
 
 model ClassUser {
@@ -166,6 +168,23 @@ model Resource {
 
   class    Class @relation(fields: [classId], references: [id], onDelete: Cascade)
   uploader User  @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+}
+
+model Schedule {
+  id        String   @id @default(cuid())
+  classId   String
+  subject   String
+  dayOfWeek Int      // 1=Senin, 7=Minggu
+  startTime String   // "07:00"
+  endTime   String   // "08:30"
+  room      String?
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  class     Class    @relation(fields: [classId], references: [id])
+  user      User     @relation(fields: [createdBy], references: [id])
+
+  @@unique([classId, dayOfWeek, startTime])
 }
 
 model Setting {

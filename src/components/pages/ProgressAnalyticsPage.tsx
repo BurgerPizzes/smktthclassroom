@@ -354,7 +354,7 @@ export default function ProgressAnalyticsPage() {
                   },
                   {
                     label: 'Rata-rata Nilai',
-                    value: overview.averageGrade,
+                    value: overview.gradedCount > 0 ? overview.averageGrade : '—',
                     icon: Star,
                     color: 'from-amber-500/20 to-orange-500/20',
                     accent: 'text-amber-600 dark:text-amber-400',
@@ -412,7 +412,7 @@ export default function ProgressAnalyticsPage() {
                     <BarChart3 className="w-4 h-4" /> Distribusi Nilai
                   </h3>
                   <div className="flex items-end gap-3 h-40">
-                    {Object.entries(gradeDistribution).map(([range, count]) => {
+                    {overview.gradedCount > 0 ? Object.entries(gradeDistribution).map(([range, count]) => {
                       const maxCount = Math.max(...Object.values(gradeDistribution), 1)
                       const height = (count / maxCount) * 100
                       return (
@@ -430,7 +430,11 @@ export default function ProgressAnalyticsPage() {
                           <span className="text-[10px] text-[var(--glass-text-muted)] text-center">{range}</span>
                         </div>
                       )
-                    })}
+                    }) : (
+                      <div className="flex-1 flex items-center justify-center text-sm text-[var(--glass-text-muted)]">
+                        Belum ada nilai yang tersedia
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               </div>

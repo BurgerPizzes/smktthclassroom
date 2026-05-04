@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, Upload, Search, Download, File, FileImage,
-  FileVideo, FileAudio, FileCode, FilePlus, X, Eye, ExternalLink, AlertCircle
+  FileVideo, FileAudio, FileCode, FilePlus, X, Eye, ExternalLink, AlertCircle,
+  LayoutGrid, List, HardDrive, Sparkles
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'
@@ -26,56 +27,181 @@ interface ClassInfo {
   name: string
 }
 
-const FILE_ICONS: Record<string, React.ElementType> = {
-  pdf: FileText,
-  doc: FileText,
-  docx: FileText,
-  xls: File,
-  xlsx: File,
-  ppt: File,
-  pptx: File,
-  jpg: FileImage,
-  jpeg: FileImage,
-  png: FileImage,
-  gif: FileImage,
-  mp4: FileVideo,
-  avi: FileVideo,
-  mp3: FileAudio,
-  wav: FileAudio,
-  js: FileCode,
-  py: FileCode,
-  zip: File,
-  default: FileText,
+// FILE_TYPE_CONFIG: maps file types to icon, colors, and gradient
+const FILE_TYPE_CONFIG: Record<string, {
+  icon: React.ElementType
+  bg: string
+  text: string
+  gradient: string
+  shadow: string
+}> = {
+  pdf: {
+    icon: FileText,
+    bg: 'bg-red-500/15',
+    text: 'text-red-600 dark:text-red-400',
+    gradient: 'from-red-500 to-rose-600',
+    shadow: 'shadow-red-500/20',
+  },
+  doc: {
+    icon: FileText,
+    bg: 'bg-blue-500/15',
+    text: 'text-blue-600 dark:text-blue-400',
+    gradient: 'from-blue-500 to-indigo-600',
+    shadow: 'shadow-blue-500/20',
+  },
+  docx: {
+    icon: FileText,
+    bg: 'bg-blue-500/15',
+    text: 'text-blue-600 dark:text-blue-400',
+    gradient: 'from-blue-500 to-indigo-600',
+    shadow: 'shadow-blue-500/20',
+  },
+  xls: {
+    icon: File,
+    bg: 'bg-emerald-500/15',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    gradient: 'from-emerald-500 to-green-600',
+    shadow: 'shadow-emerald-500/20',
+  },
+  xlsx: {
+    icon: File,
+    bg: 'bg-emerald-500/15',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    gradient: 'from-emerald-500 to-green-600',
+    shadow: 'shadow-emerald-500/20',
+  },
+  ppt: {
+    icon: FileText,
+    bg: 'bg-orange-500/15',
+    text: 'text-orange-600 dark:text-orange-400',
+    gradient: 'from-orange-500 to-amber-600',
+    shadow: 'shadow-orange-500/20',
+  },
+  pptx: {
+    icon: FileText,
+    bg: 'bg-orange-500/15',
+    text: 'text-orange-600 dark:text-orange-400',
+    gradient: 'from-orange-500 to-amber-600',
+    shadow: 'shadow-orange-500/20',
+  },
+  jpg: {
+    icon: FileImage,
+    bg: 'bg-purple-500/15',
+    text: 'text-purple-600 dark:text-purple-400',
+    gradient: 'from-purple-500 to-violet-600',
+    shadow: 'shadow-purple-500/20',
+  },
+  jpeg: {
+    icon: FileImage,
+    bg: 'bg-purple-500/15',
+    text: 'text-purple-600 dark:text-purple-400',
+    gradient: 'from-purple-500 to-violet-600',
+    shadow: 'shadow-purple-500/20',
+  },
+  png: {
+    icon: FileImage,
+    bg: 'bg-emerald-500/15',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    gradient: 'from-emerald-500 to-teal-600',
+    shadow: 'shadow-emerald-500/20',
+  },
+  gif: {
+    icon: FileImage,
+    bg: 'bg-purple-500/15',
+    text: 'text-purple-600 dark:text-purple-400',
+    gradient: 'from-purple-500 to-pink-600',
+    shadow: 'shadow-purple-500/20',
+  },
+  mp4: {
+    icon: FileVideo,
+    bg: 'bg-rose-500/15',
+    text: 'text-rose-600 dark:text-rose-400',
+    gradient: 'from-rose-500 to-red-600',
+    shadow: 'shadow-rose-500/20',
+  },
+  avi: {
+    icon: FileVideo,
+    bg: 'bg-rose-500/15',
+    text: 'text-rose-600 dark:text-rose-400',
+    gradient: 'from-rose-500 to-red-600',
+    shadow: 'shadow-rose-500/20',
+  },
+  mp3: {
+    icon: FileAudio,
+    bg: 'bg-cyan-500/15',
+    text: 'text-cyan-600 dark:text-cyan-400',
+    gradient: 'from-cyan-500 to-blue-600',
+    shadow: 'shadow-cyan-500/20',
+  },
+  wav: {
+    icon: FileAudio,
+    bg: 'bg-cyan-500/15',
+    text: 'text-cyan-600 dark:text-cyan-400',
+    gradient: 'from-cyan-500 to-blue-600',
+    shadow: 'shadow-cyan-500/20',
+  },
+  zip: {
+    icon: File,
+    bg: 'bg-amber-500/15',
+    text: 'text-amber-600 dark:text-amber-400',
+    gradient: 'from-amber-500 to-yellow-600',
+    shadow: 'shadow-amber-500/20',
+  },
+  js: {
+    icon: FileCode,
+    bg: 'bg-yellow-500/15',
+    text: 'text-yellow-600 dark:text-yellow-400',
+    gradient: 'from-yellow-500 to-amber-600',
+    shadow: 'shadow-yellow-500/20',
+  },
+  py: {
+    icon: FileCode,
+    bg: 'bg-sky-500/15',
+    text: 'text-sky-600 dark:text-sky-400',
+    gradient: 'from-sky-500 to-blue-600',
+    shadow: 'shadow-sky-500/20',
+  },
 }
 
-const FILE_COLORS: Record<string, string> = {
-  pdf: 'bg-[var(--badge-red-bg)] text-[var(--badge-red-text)]',
-  doc: 'bg-[var(--badge-blue-bg)] text-[var(--badge-blue-text)]',
-  docx: 'bg-[var(--badge-blue-bg)] text-[var(--badge-blue-text)]',
-  xls: 'bg-[var(--badge-green-bg)] text-[var(--badge-green-text)]',
-  xlsx: 'bg-[var(--badge-green-bg)] text-[var(--badge-green-text)]',
-  ppt: 'bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]',
-  pptx: 'bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)]',
-  jpg: 'bg-[var(--badge-purple-bg)] text-[var(--badge-purple-text)]',
-  png: 'bg-[var(--badge-purple-bg)] text-[var(--badge-purple-text)]',
-  mp4: 'bg-[var(--badge-purple-bg)] text-[var(--badge-purple-text)]',
-  mp3: 'bg-[var(--badge-blue-bg)] text-[var(--badge-blue-text)]',
-  default: 'bg-[var(--chip-bg)] text-[var(--chip-text)]',
+const DEFAULT_FILE_CONFIG = {
+  icon: FileText,
+  bg: 'bg-[var(--chip-bg)]',
+  text: 'text-[var(--glass-text-secondary)]',
+  gradient: 'from-gray-500 to-slate-600',
+  shadow: 'shadow-gray-500/20',
 }
 
 // File types that can be previewed in browser
 const PREVIEWABLE_TYPES = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'mp4', 'mp3', 'wav', 'txt', 'html']
 
-function getFileIcon(type: string) {
-  return FILE_ICONS[type?.toLowerCase()] || FILE_ICONS.default
-}
-
-function getFileColor(type: string) {
-  return FILE_COLORS[type?.toLowerCase()] || FILE_COLORS.default
+function getFileConfig(type: string) {
+  return FILE_TYPE_CONFIG[type?.toLowerCase()] || DEFAULT_FILE_CONFIG
 }
 
 function isPreviewable(type: string) {
   return PREVIEWABLE_TYPES.includes(type?.toLowerCase())
+}
+
+// Generate simulated file size from title hash
+function getSimulatedFileSize(title: string): string {
+  let hash = 0
+  for (let i = 0; i < title.length; i++) {
+    hash = ((hash << 5) - hash) + title.charCodeAt(i)
+    hash |= 0
+  }
+  const absHash = Math.abs(hash)
+  const sizeInKB = (absHash % 10000) + 50 // 50 KB to ~10 MB
+  if (sizeInKB >= 1024) {
+    return `${(sizeInKB / 1024).toFixed(1)} MB`
+  }
+  return `${sizeInKB} KB`
+}
+
+// Check if resource was added within 7 days
+function isRecentlyAdded(createdAt: string): boolean {
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  return new Date(createdAt) > sevenDaysAgo
 }
 
 export default function LearningResourcesPage() {
@@ -92,6 +218,7 @@ export default function LearningResourcesPage() {
   const [previewResource, setPreviewResource] = useState<Resource | null>(null)
   const [previewError, setPreviewError] = useState(false)
   const [userClasses, setUserClasses] = useState<ClassInfo[]>([])
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   const isGuru = user?.role === 'guru' || user?.role === 'admin'
 
@@ -136,7 +263,7 @@ export default function LearningResourcesPage() {
       setFileName(file.name)
       // Auto-detect file type
       const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf'
-      if (FILE_ICONS[ext]) {
+      if (FILE_TYPE_CONFIG[ext]) {
         setUploadForm(prev => ({ ...prev, fileType: ext }))
       }
     }
@@ -213,13 +340,31 @@ export default function LearningResourcesPage() {
     setPreviewError(false)
   }, [])
 
-  const types = [...new Set(resources.map((r) => r.fileType))]
+  const types = useMemo(() => [...new Set(resources.map((r) => r.fileType))], [resources])
 
-  const filtered = resources.filter((r) => {
+  // Resource count per class for filter tabs
+  const classCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    resources.forEach((r) => {
+      counts[r.class.name] = (counts[r.class.name] || 0) + 1
+    })
+    return counts
+  }, [resources])
+
+  // Type filter count
+  const typeCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    resources.forEach((r) => {
+      counts[r.fileType] = (counts[r.fileType] || 0) + 1
+    })
+    return counts
+  }, [resources])
+
+  const filtered = useMemo(() => resources.filter((r) => {
     const matchSearch = r.title.toLowerCase().includes(search.toLowerCase())
     const matchType = typeFilter === 'all' || r.fileType === typeFilter
     return matchSearch && matchType
-  })
+  }), [resources, search, typeFilter])
 
   if (loading) {
     return (
@@ -244,11 +389,30 @@ export default function LearningResourcesPage() {
           </h1>
           <p className="text-[var(--glass-text-secondary)] text-sm mt-1">Materi dan dokumen pembelajaran</p>
         </div>
-        {isGuru && (
-          <button onClick={() => setShowUpload(true)} className="btn-gradient flex items-center gap-2 text-sm">
-            <Upload className="w-4 h-4" /> Unggah
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="view-toggle">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              title="Tampilan grid"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+              title="Tampilan daftar"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          {isGuru && (
+            <button onClick={() => setShowUpload(true)} className="btn-gradient flex items-center gap-2 text-sm">
+              <Upload className="w-4 h-4" /> Unggah
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Search & Filter */}
@@ -270,58 +434,142 @@ export default function LearningResourcesPage() {
               typeFilter === 'all' ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' : 'glass-btn text-[var(--glass-text-secondary)]'
             }`}
           >
-            Semua
+            Semua <span className="ml-1 opacity-70">({resources.length})</span>
           </button>
-          {types.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTypeFilter(t)}
-              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                typeFilter === t ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' : 'glass-btn text-[var(--glass-text-secondary)]'
-              }`}
-            >
-              {t.toUpperCase()}
-            </button>
-          ))}
+          {types.map((t) => {
+            const config = getFileConfig(t)
+            return (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  typeFilter === t ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' : 'glass-btn text-[var(--glass-text-secondary)]'
+                }`}
+              >
+                <config.icon className="w-3 h-3" />
+                {t.toUpperCase()}
+                <span className="opacity-70">({typeCounts[t] || 0})</span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {/* Resource Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <AnimatePresence>
-          {filtered.map((resource, idx) => {
-            const Icon = getFileIcon(resource.fileType)
-            const color = getFileColor(resource.fileType)
-            const canPreview = isPreviewable(resource.fileType)
-            return (
-              <motion.div
-                key={resource.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ delay: idx * 0.05 }}
-                className="interactive-card p-4"
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
-                    <Icon className="w-5 h-5" />
+      {/* Resource Grid / List */}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <AnimatePresence>
+            {filtered.map((resource, idx) => {
+              const config = getFileConfig(resource.fileType)
+              const ConfigIcon = config.icon
+              const canPreview = isPreviewable(resource.fileType)
+              const isNew = isRecentlyAdded(resource.createdAt)
+              const fileSize = getSimulatedFileSize(resource.title)
+
+              return (
+                <motion.div
+                  key={resource.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="interactive-card p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Large file type badge */}
+                    <div className={`file-type-badge w-12 h-12 bg-gradient-to-br ${config.gradient} ${config.shadow} shadow-lg shrink-0`}>
+                      <ConfigIcon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-medium text-[var(--glass-text)] truncate">{resource.title}</h3>
+                        {isNew && <span className="new-badge">Baru</span>}
+                      </div>
+                      <p className="text-xs text-[var(--glass-text-muted)] mt-0.5">{resource.class.name}</p>
+                      <p className="text-xs text-[var(--glass-text-muted)] mt-0.5">oleh {resource.uploader.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--glass-border)]">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${config.bg} ${config.text}`}>
+                        {resource.fileType.toUpperCase()}
+                      </span>
+                      <span className="flex items-center gap-1 text-xs text-[var(--glass-text-muted)]">
+                        <HardDrive className="w-3 h-3" />
+                        {fileSize}
+                      </span>
+                      <span className="text-xs text-[var(--glass-text-muted)]">
+                        {format(new Date(resource.createdAt), 'dd MMM', { locale: localeId })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {canPreview && (
+                        <button
+                          onClick={() => handlePreview(resource)}
+                          className="text-[var(--glass-text-muted)] hover:text-purple-600 dark:hover:text-purple-400 transition-colors p-1"
+                          title="Lihat"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDownload(resource)}
+                        className="text-[var(--glass-text-muted)] hover:text-[var(--glass-text-secondary)] transition-colors p-1"
+                        title="Unduh"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
+        </div>
+      ) : (
+        /* List view */
+        <div className="space-y-2">
+          <AnimatePresence>
+            {filtered.map((resource, idx) => {
+              const config = getFileConfig(resource.fileType)
+              const ConfigIcon = config.icon
+              const canPreview = isPreviewable(resource.fileType)
+              const isNew = isRecentlyAdded(resource.createdAt)
+              const fileSize = getSimulatedFileSize(resource.title)
+
+              return (
+                <motion.div
+                  key={resource.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ delay: idx * 0.03 }}
+                  className="interactive-card p-3 flex items-center gap-3"
+                >
+                  {/* Large file type badge */}
+                  <div className={`file-type-badge w-10 h-10 bg-gradient-to-br ${config.gradient} ${config.shadow} shadow-md shrink-0`}>
+                    <ConfigIcon className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-[var(--glass-text)] truncate">{resource.title}</h3>
-                    <p className="text-xs text-[var(--glass-text-muted)] mt-0.5">{resource.class.name}</p>
-                    <p className="text-xs text-[var(--glass-text-muted)] mt-0.5">oleh {resource.uploader.name}</p>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium text-[var(--glass-text)] truncate">{resource.title}</h3>
+                      {isNew && <span className="new-badge">Baru</span>}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-[var(--glass-text-muted)]">
+                      <span>{resource.class.name}</span>
+                      <span>•</span>
+                      <span>{resource.uploader.name}</span>
+                      <span>•</span>
+                      <span className="flex items-center gap-0.5"><HardDrive className="w-2.5 h-2.5" />{fileSize}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--glass-border)]">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${color}`}>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${config.bg} ${config.text}`}>
                       {resource.fileType.toUpperCase()}
                     </span>
-                    <span className="text-xs text-[var(--glass-text-muted)]">
+                    <span className="text-xs text-[var(--glass-text-muted)] hidden sm:inline">
                       {format(new Date(resource.createdAt), 'dd MMM', { locale: localeId })}
                     </span>
-                  </div>
-                  <div className="flex items-center gap-1">
                     {canPreview && (
                       <button
                         onClick={() => handlePreview(resource)}
@@ -339,12 +587,12 @@ export default function LearningResourcesPage() {
                       <Download className="w-4 h-4" />
                     </button>
                   </div>
-                </div>
-              </motion.div>
-            )
-          })}
-        </AnimatePresence>
-      </div>
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Empty State */}
       {filtered.length === 0 && !loading && (
@@ -378,12 +626,18 @@ export default function LearningResourcesPage() {
                 {/* Preview Header */}
                 <div className="flex items-center justify-between p-4 border-b border-[var(--glass-border)]">
                   <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getFileColor(previewResource.fileType)}`}>
-                      {(() => { const PI = getFileIcon(previewResource.fileType); return <PI className="w-4 h-4" /> })()}
-                    </div>
+                    {(() => {
+                      const cfg = getFileConfig(previewResource.fileType)
+                      const CIcon = cfg.icon
+                      return (
+                        <div className={`file-type-badge w-8 h-8 bg-gradient-to-br ${cfg.gradient}`}>
+                          <CIcon className="w-4 h-4 text-white" />
+                        </div>
+                      )
+                    })()}
                     <div>
                       <h3 className="text-sm font-medium text-[var(--glass-text)]">{previewResource.title}</h3>
-                      <p className="text-xs text-[var(--glass-text-muted)]">{previewResource.class.name} • {previewResource.uploader.name}</p>
+                      <p className="text-xs text-[var(--glass-text-muted)]">{previewResource.class.name} • {previewResource.uploader.name} • {getSimulatedFileSize(previewResource.title)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -516,19 +770,24 @@ export default function LearningResourcesPage() {
                 <div>
                   <label className="text-sm text-[var(--glass-text-secondary)] mb-1.5 block">Tipe File</label>
                   <div className="grid grid-cols-4 gap-2">
-                    {['pdf', 'doc', 'xls', 'ppt', 'jpg', 'mp4', 'mp3', 'zip'].map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => setUploadForm({ ...uploadForm, fileType: t })}
-                        className={`py-2 rounded-lg text-xs font-medium transition-all ${
-                          uploadForm.fileType === t
-                            ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white'
-                            : 'glass-btn text-[var(--glass-text-secondary)]'
-                        }`}
-                      >
-                        {t.toUpperCase()}
-                      </button>
-                    ))}
+                    {['pdf', 'doc', 'xls', 'ppt', 'jpg', 'mp4', 'mp3', 'zip'].map((t) => {
+                      const tConfig = getFileConfig(t)
+                      const TIcon = tConfig.icon
+                      return (
+                        <button
+                          key={t}
+                          onClick={() => setUploadForm({ ...uploadForm, fileType: t })}
+                          className={`py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1 ${
+                            uploadForm.fileType === t
+                              ? `bg-gradient-to-br ${tConfig.gradient} text-white shadow-md`
+                              : 'glass-btn text-[var(--glass-text-secondary)]'
+                          }`}
+                        >
+                          <TIcon className="w-3 h-3" />
+                          {t.toUpperCase()}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
