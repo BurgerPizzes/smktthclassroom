@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { GraduationCap, Mail, Lock, Eye, EyeOff, UserPlus, User } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { GraduationCap, Mail, Lock, Eye, EyeOff, UserPlus, User, BookOpen, Users, Shield, Sparkles } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'
 
@@ -44,73 +44,131 @@ export default function RegisterPage() {
   }, [name, email, password, role, setUser, setPage])
 
   return (
-    <div className="mesh-gradient min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Floating orbs */}
-      <div className="floating-orb w-72 h-72 bg-purple-500 top-[-5%] right-[-10%]" style={{ animation: 'float 8s ease-in-out infinite' }} />
-      <div className="floating-orb w-96 h-96 bg-blue-500 bottom-[-10%] left-[-5%]" style={{ animation: 'float-slow 12s ease-in-out infinite' }} />
-      <div className="floating-orb w-48 h-48 bg-pink-400 top-[20%] left-[10%]" style={{ animation: 'float 10s ease-in-out infinite 2s' }} />
+    <div className="login-bg min-h-screen flex items-center justify-center p-4 relative">
+      {/* Floating shapes */}
+      <div className="floating-shape floating-shape-1" />
+      <div className="floating-shape floating-shape-2" />
+      <div className="floating-shape floating-shape-3" />
+      <div className="floating-shape floating-shape-4" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="w-full max-w-md relative z-10"
-      >
-        <div className="gradient-border p-[1px]">
-          <div className="glass-card p-8 space-y-6">
+      {/* Particles */}
+      <div className="login-particle" style={{ top: '15%', left: '20%' }} />
+      <div className="login-particle" style={{ top: '25%', right: '25%' }} />
+      <div className="login-particle" style={{ bottom: '35%', left: '30%' }} />
+      <div className="login-particle" style={{ top: '60%', right: '15%' }} />
+      <div className="login-particle" style={{ bottom: '20%', left: '15%' }} />
+      <div className="login-particle" style={{ top: '45%', left: '60%' }} />
+
+      <div className="w-full max-w-5xl flex items-center relative z-10 gap-8">
+        {/* Left decorative panel - desktop only */}
+        <motion.div
+          initial={{ opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="hidden lg:flex login-deco-panel rounded-3xl p-10 flex-col justify-between min-h-[560px] w-[45%] text-white shadow-2xl shadow-purple-500/20"
+        >
+          <div>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, delay: 0.3 }}
+              className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-8"
+            >
+              <GraduationCap className="w-9 h-9 text-white" />
+            </motion.div>
+            <h2 className="text-3xl font-bold mb-3">Bergabung di</h2>
+            <h1 className="text-4xl font-extrabold tracking-tight mb-4">SMKTTH<br />Classroom</h1>
+            <p className="text-white/70 text-sm leading-relaxed max-w-sm">
+              Daftar sekarang dan mulai kelola pembelajaran digital Anda. Akses tugas, kelas, dan sumber belajar kapan saja.
+            </p>
+          </div>
+
+          <div className="space-y-4 mt-8">
+            {[
+              { icon: BookOpen, text: 'Akses materi & tugas 24/7' },
+              { icon: Users, text: 'Kolaborasi dengan guru & siswa' },
+              { icon: Shield, text: 'Data akun aman & terlindungi' },
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 + i * 0.15 }}
+                className="flex items-center gap-3 text-white/80"
+              >
+                <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+                  <item.icon className="w-4 h-4" />
+                </div>
+                <span className="text-sm">{item.text}</span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Register Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="w-full lg:w-[55%] max-w-md mx-auto lg:mx-0"
+        >
+          <div className="glass-card-login p-8 space-y-6">
             {/* Logo & Title */}
             <div className="text-center space-y-3">
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-                className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center shadow-lg shadow-purple-500/30"
+                className="mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center shadow-lg shadow-purple-500/30 pulse-glow"
               >
-                <GraduationCap className="w-8 h-8 text-white" />
+                <GraduationCap className="w-10 h-10 text-white" />
               </motion.div>
               <div>
-                <h1 className="text-3xl font-bold gradient-text">Buat Akun</h1>
-                <p className="text-[var(--glass-text-secondary)] text-sm mt-1">Bergabung di SMKTTH Classroom</p>
+                <h1 className="text-3xl font-bold text-white">Buat Akun</h1>
+                <p className="text-white/40 text-sm mt-1 flex items-center justify-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Bergabung di SMKTTH Classroom
+                </p>
               </div>
             </div>
 
             {/* Register Form */}
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--glass-text-muted)]" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/35" />
                 <input
                   type="text"
                   placeholder="Nama Lengkap"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="glass-input pl-10"
+                  className="login-input"
                 />
               </div>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--glass-text-muted)]" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/35" />
                 <input
                   type="email"
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="glass-input pl-10"
+                  className="login-input"
                   autoComplete="email"
                 />
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--glass-text-muted)]" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/35" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="glass-input pl-10 pr-10"
+                  className="login-input pr-10"
                   autoComplete="new-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--glass-text-muted)] hover:text-[var(--glass-text)] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/35 hover:text-white/60 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -118,21 +176,27 @@ export default function RegisterPage() {
 
               {/* Role selector */}
               <div className="space-y-2">
-                <label className="text-sm text-[var(--glass-text-secondary)]">Peran</label>
+                <label className="text-sm text-white/50">Peran</label>
                 <div className="grid grid-cols-2 gap-3">
-                  {['siswa', 'guru'].map((r) => (
-                    <button
-                      key={r}
+                  {[
+                    { value: 'siswa', label: 'Siswa', icon: GraduationCap, color: 'from-emerald-500 to-green-500' },
+                    { value: 'guru', label: 'Guru', icon: BookOpen, color: 'from-blue-500 to-cyan-500' },
+                  ].map((r) => (
+                    <motion.button
+                      key={r.value}
                       type="button"
-                      onClick={() => setRole(r)}
-                      className={`py-2.5 rounded-xl text-sm font-medium transition-all ${
-                        role === r
+                      onClick={() => setRole(r.value)}
+                      className={`py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                        role === r.value
                           ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white shadow-lg shadow-purple-500/30'
-                          : 'glass-btn text-[var(--glass-text-secondary)]'
+                          : 'border border-white/12 text-white/50 hover:text-white/70 hover:border-white/20 bg-white/5'
                       }`}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      {r === 'siswa' ? '👨‍🎓 Siswa' : '👨‍🏫 Guru'}
-                    </button>
+                      <r.icon className="w-4 h-4" />
+                      {r.label}
+                    </motion.button>
                   ))}
                 </div>
               </div>
@@ -140,7 +204,7 @@ export default function RegisterPage() {
               <motion.button
                 type="submit"
                 disabled={loading}
-                className="btn-gradient w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-pulse-gradient w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed py-3"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -156,18 +220,18 @@ export default function RegisterPage() {
             </form>
 
             {/* Login link */}
-            <p className="text-center text-sm text-[var(--glass-text-secondary)]">
+            <p className="text-center text-sm text-white/40">
               Sudah punya akun?{' '}
               <button
                 onClick={() => setPage('login')}
-                className="text-[#667eea] hover:text-[#764ba2] transition-colors font-medium"
+                className="text-white/70 hover:text-white transition-colors font-medium"
               >
                 Masuk
               </button>
             </p>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   )
 }

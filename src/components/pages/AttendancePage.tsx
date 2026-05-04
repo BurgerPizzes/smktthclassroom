@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   UserCheck, UserX, Clock, Calendar, CheckCircle2, XCircle,
-  AlertCircle
+  AlertCircle, Download, TrendingUp, BarChart3
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
-import { format } from 'date-fns'
+import { format, subDays, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns'
 import { id as localeId } from 'date-fns/locale/id'
 import { toast } from 'sonner'
 
@@ -56,7 +56,6 @@ export default function AttendancePage() {
         const res = await fetch('/api/classes')
         if (res.ok) {
           const allClasses = await res.json()
-          // Filter classes where the current user is a guru
           const myClasses = allClasses.filter((c: any) =>
             c.classUsers?.some((cu: any) => cu.userId === user.id && cu.role === 'guru')
           )
@@ -142,6 +141,61 @@ export default function AttendancePage() {
     setAttendanceForm(form)
   }, [students])
 
+  // Attendance summary for teacher view
+  const attendanceSummary = useMemo(() => {
+    if (!isGuru || records.length === 0) return null
+
+    const now = new Date()
+    const monthStart = startOfMonth(now)
+    const monthEnd = endOfMonth(now)
+
+    // Monthly records
+    const monthlyRecords = records.filter((r) => {
+      try {
+        const d = typeof r.date === 'string' ? parseISO(r.date) : new Date(r.date)
+        return isWithinInterval(d, { start: monthStart, end: monthEnd })
+      } catch {
+        return false
+      }
+    })
+
+    const totalMonthly = monthlyRecords.length
+    const hadirMonthly = monthlyRecords.filter((r) => r.status === 'hadir').length
+    const tidakMonthly = monthlyRecords.filter((r) => r.status === 'tidak').length
+    const terlambatMonthly = monthlyRecords.filter((r) => r.status === 'terlambat').length
+    const attendanceRate = totalMonthly > 0 ? Math.round((hadirMonthly / totalMonthly) * 100) : 0
+
+    // Last 7 days trend
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = subDays(now, 6 - i)
+      const dateStr = format(date, 'yyyy-MM-dd')
+      const dayRecords = records.filter((r) => {
+        try {
+          const d = typeof r.date === 'string' ? parseISO(r.date) : new Date(r.date)
+          return format(d, 'yyyy-MM-dd') === dateStr
+        } catch {
+          return false
+        }
+      })
+      return {
+        date: dateStr,
+        dayLabel: format(date, 'EEE', { locale: localeId }),
+        hadir: dayRecords.filter((r) => r.status === 'hadir').length,
+        tidak: dayRecords.filter((r) => r.status === 'tidak').length,
+        terlambat: dayRecords.filter((r) => r.status === 'terlambat').length,
+      }
+    })
+
+    return {
+      attendanceRate,
+      totalMonthly,
+      hadirMonthly,
+      tidakMonthly,
+      terlambatMonthly,
+      last7Days,
+    }
+  }, [records, isGuru])
+
   const handleMarkAttendance = useCallback(async () => {
     if (!selectedClassId) {
       toast.error('Pilih kelas terlebih dahulu')
@@ -164,7 +218,6 @@ export default function AttendancePage() {
         return
       }
       toast.success('Absensi berhasil disimpan!')
-      // Refresh data
       const attRes = await fetch(`/api/attendance?classId=${selectedClassId}`)
       if (attRes.ok) setRecords(await attRes.json())
     } catch {
@@ -258,6 +311,173 @@ export default function AttendancePage() {
         <p className="text-[var(--glass-text-secondary)] text-sm mt-1">Kelola kehadiran siswa</p>
       </div>
 
+      {/* Attendance Summary Visualization */}
+      {attendanceSummary && selectedClassId && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Attendance Rate - Circular Progress */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-card-glow p-5 flex flex-col items-center"
+          >
+            <h3 className="text-sm font-medium text-[var(--glass-text-secondary)] mb-3 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" /> Tingkat Kehadiran
+            </h3>
+            <div className="relative w-28 h-28">
+              <svg width="112" height="112" className="transform -rotate-90">
+                <circle cx="56" cy="56" r="48" stroke="var(--glass-input-bg)" strokeWidth="8" fill="none" />
+                <circle
+                  cx="56" cy="56" r="48"
+                  stroke={attendanceSummary.attendanceRate >= 80 ? '#22c55e' : attendanceSummary.attendanceRate >= 60 ? '#f59e0b' : '#ef4444'}
+                  strokeWidth="8"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(attendanceSummary.attendanceRate / 100) * 301.59} 301.59`}
+                  className="transition-all duration-700"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold text-[var(--glass-text)]">{attendanceSummary.attendanceRate}%</span>
+                <span className="text-[10px] text-[var(--glass-text-muted)]">kehadiran</span>
+              </div>
+            </div>
+            <p className="text-xs text-[var(--glass-text-muted)] mt-2">Bulan ini</p>
+          </motion.div>
+
+          {/* Last 7 Days Trend - Mini Bar Chart */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="glass-card-glow p-5"
+          >
+            <h3 className="text-sm font-medium text-[var(--glass-text-secondary)] mb-3 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" /> Tren 7 Hari
+            </h3>
+            <div className="flex items-end gap-1.5 h-24">
+              {attendanceSummary.last7Days.map((day) => {
+                const maxVal = Math.max(day.hadir + day.terlambat + day.tidak, 1)
+                const hadirH = Math.max((day.hadir / maxVal) * 100, day.hadir > 0 ? 8 : 0)
+                const terlambatH = Math.max((day.terlambat / maxVal) * 100, day.terlambat > 0 ? 8 : 0)
+                const tidakH = Math.max((day.tidak / maxVal) * 100, day.tidak > 0 ? 8 : 0)
+
+                return (
+                  <div key={day.date} className="flex-1 flex flex-col items-center gap-0.5">
+                    <div className="flex flex-col-reverse w-full items-center gap-0.5" style={{ height: '80px' }}>
+                      {day.hadir > 0 && (
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: `${hadirH}%` }}
+                          transition={{ duration: 0.5 }}
+                          className="w-full bg-emerald-500 rounded-t-sm min-h-[3px]"
+                          title={`Hadir: ${day.hadir}`}
+                        />
+                      )}
+                      {day.terlambat > 0 && (
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: `${terlambatH}%` }}
+                          transition={{ duration: 0.5, delay: 0.05 }}
+                          className="w-full bg-amber-500 min-h-[3px]"
+                          title={`Terlambat: ${day.terlambat}`}
+                        />
+                      )}
+                      {day.tidak > 0 && (
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: `${tidakH}%` }}
+                          transition={{ duration: 0.5, delay: 0.1 }}
+                          className="w-full bg-red-500 rounded-b-sm min-h-[3px]"
+                          title={`Tidak Hadir: ${day.tidak}`}
+                        />
+                      )}
+                    </div>
+                    <span className="text-[9px] text-[var(--glass-text-muted)] mt-1">{day.dayLabel}</span>
+                  </div>
+                )
+              })}
+            </div>
+            {/* Legend */}
+            <div className="flex items-center justify-center gap-3 mt-3">
+              <span className="flex items-center gap-1 text-[10px] text-[var(--glass-text-muted)]">
+                <span className="w-2 h-2 rounded-sm bg-emerald-500" /> Hadir
+              </span>
+              <span className="flex items-center gap-1 text-[10px] text-[var(--glass-text-muted)]">
+                <span className="w-2 h-2 rounded-sm bg-amber-500" /> Terlambat
+              </span>
+              <span className="flex items-center gap-1 text-[10px] text-[var(--glass-text-muted)]">
+                <span className="w-2 h-2 rounded-sm bg-red-500" /> Tidak
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Monthly Summary Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass-card-glow p-5"
+          >
+            <h3 className="text-sm font-medium text-[var(--glass-text-secondary)] mb-3 flex items-center gap-2">
+              <Calendar className="w-4 h-4" /> Ringkasan Bulan Ini
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-sm text-[var(--glass-text)]">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Hadir
+                </span>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{attendanceSummary.hadirMonthly}</span>
+              </div>
+              <div className="progress-bar h-2">
+                <motion.div
+                  className="h-2 rounded-full bg-emerald-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${attendanceSummary.totalMonthly > 0 ? (attendanceSummary.hadirMonthly / attendanceSummary.totalMonthly) * 100 : 0}%` }}
+                  transition={{ duration: 0.7 }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-sm text-[var(--glass-text)]">
+                  <Clock className="w-4 h-4 text-amber-500" /> Terlambat
+                </span>
+                <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{attendanceSummary.terlambatMonthly}</span>
+              </div>
+              <div className="progress-bar h-2">
+                <motion.div
+                  className="h-2 rounded-full bg-amber-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${attendanceSummary.totalMonthly > 0 ? (attendanceSummary.terlambatMonthly / attendanceSummary.totalMonthly) * 100 : 0}%` }}
+                  transition={{ duration: 0.7, delay: 0.1 }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-sm text-[var(--glass-text)]">
+                  <XCircle className="w-4 h-4 text-red-500" /> Tidak Hadir
+                </span>
+                <span className="text-sm font-bold text-red-600 dark:text-red-400">{attendanceSummary.tidakMonthly}</span>
+              </div>
+              <div className="progress-bar h-2">
+                <motion.div
+                  className="h-2 rounded-full bg-red-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${attendanceSummary.totalMonthly > 0 ? (attendanceSummary.tidakMonthly / attendanceSummary.totalMonthly) * 100 : 0}%` }}
+                  transition={{ duration: 0.7, delay: 0.2 }}
+                />
+              </div>
+
+              <div className="pt-2 border-t border-[var(--glass-border)]">
+                <div className="flex items-center justify-between text-xs text-[var(--glass-text-muted)]">
+                  <span>Total Record</span>
+                  <span className="font-medium text-[var(--glass-text-secondary)]">{attendanceSummary.totalMonthly}</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* Class selector & Date picker */}
       <div className="glass-card p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="flex items-center gap-2 flex-1">
@@ -282,6 +502,29 @@ export default function AttendancePage() {
             ))}
           </select>
         </div>
+        <button
+          onClick={async () => {
+            if (!selectedClassId) { toast.error('Pilih kelas terlebih dahulu'); return }
+            try {
+              const res = await fetch(`/api/attendance/export?classId=${selectedClassId}`)
+              if (res.ok) {
+                const blob = await res.blob()
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `absensi-${selectedClassId}.csv`
+                a.click()
+                URL.revokeObjectURL(url)
+                toast.success('Data absensi berhasil diekspor')
+              } else {
+                toast.error('Gagal mengekspor data')
+              }
+            } catch { toast.error('Terjadi kesalahan') }
+          }}
+          className="glass-btn flex items-center gap-2 text-sm"
+        >
+          <Download className="w-4 h-4" /> Export CSV
+        </button>
       </div>
 
       {/* Attendance List */}

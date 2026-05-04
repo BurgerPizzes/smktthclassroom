@@ -103,7 +103,7 @@ function PageRenderer() {
 }
 
 function AppLayoutInner() {
-  const { user, currentPage, sidebarOpen, setPage, setUser, logout, toggleSidebar, setSidebarOpen } = useAppStore()
+  const { user, currentPage, sidebarOpen, setPage, setUser, logout, toggleSidebar, setSidebarOpen, setNotifications, setNotifCount: setStoreNotifCount } = useAppStore()
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
 
@@ -145,7 +145,10 @@ function AppLayoutInner() {
         const res = await fetch('/api/notifications')
         if (res.ok) {
           const data = await res.json()
-          setNotifCount(data.filter((n: any) => !n.read).length)
+          const unreadCount = data.filter((n: any) => !n.read).length
+          setNotifCount(unreadCount)
+          setStoreNotifCount(unreadCount)
+          setNotifications(data)
         }
       } catch {
         // silently fail
@@ -154,7 +157,7 @@ function AppLayoutInner() {
     fetchCount()
     const interval = setInterval(fetchCount, 30000)
     return () => clearInterval(interval)
-  }, [user])
+  }, [user, setNotifications, setStoreNotifCount])
 
   // Close sidebar on mobile when navigating
   useEffect(() => {
@@ -264,8 +267,37 @@ function AppLayoutInner() {
         )}
       </AnimatePresence>
 
+      {/* Bottom Navigation - Mobile Only */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden glass-panel border-t border-[var(--glass-border)] safe-area-bottom">
+        <div className="flex items-center justify-around py-2 px-2">
+          {[
+            { page: 'dashboard' as PageName, label: 'Dashboard', icon: LayoutDashboard },
+            { page: 'classes' as PageName, label: 'Kelas', icon: BookOpen },
+            { page: 'attendance' as PageName, label: 'Absensi', icon: ClipboardCheck },
+            { page: 'learning-resources' as PageName, label: 'Sumber', icon: FolderOpen },
+            { page: 'profile' as PageName, label: 'Profil', icon: User },
+          ].map((item) => {
+            const isActive = currentPage === item.page
+            return (
+              <button
+                key={item.page}
+                onClick={() => setPage(item.page)}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all min-w-0 ${
+                  isActive
+                    ? 'text-[#667eea]'
+                    : 'text-[var(--glass-text-muted)] hover:text-[var(--glass-text-secondary)]'
+                }`}
+              >
+                <item.icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium truncate">{item.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
         {/* Top Navbar */}
         <header className="sticky top-0 z-30 glass-panel border-b border-[var(--glass-border)] px-4 md:px-6 py-3">
           <div className="flex items-center justify-between">
@@ -356,8 +388,8 @@ function AppLayoutInner() {
         <main className="flex-1 flex flex-col">
           <PageRenderer />
 
-          {/* Footer */}
-          <footer className="mt-auto border-t border-[var(--glass-border)] px-6 py-4 text-center">
+          {/* Footer - hidden on mobile to not conflict with bottom nav */}
+          <footer className="mt-auto border-t border-[var(--glass-border)] px-6 py-4 text-center hidden lg:block">
             <p className="text-xs text-[var(--glass-text-muted)]">
               © {new Date().getFullYear()} SMKTTH Classroom — Sistem Manajemen Pembelajaran Digital
             </p>

@@ -33,12 +33,16 @@ interface AppState {
   params: Record<string, string>
   user: UserInfo | null
   sidebarOpen: boolean
+  notifications: any[]
+  notifCount: number
 
   setPage: (page: PageName, params?: Record<string, string>) => void
   setUser: (user: UserInfo | null) => void
   logout: () => Promise<void>
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
+  setNotifications: (notifications: any[]) => void
+  setNotifCount: (count: number) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -46,6 +50,8 @@ export const useAppStore = create<AppState>((set) => ({
   params: {},
   user: null,
   sidebarOpen: false,
+  notifications: [],
+  notifCount: 0,
 
   setPage: (page, params = {}) =>
     set({ currentPage: page, params }),
@@ -59,7 +65,7 @@ export const useAppStore = create<AppState>((set) => ({
     } catch {
       // ignore network errors
     }
-    set({ user: null, currentPage: 'login', params: {}, sidebarOpen: false })
+    set({ user: null, currentPage: 'login', params: {}, sidebarOpen: false, notifications: [], notifCount: 0 })
   },
 
   toggleSidebar: () =>
@@ -67,4 +73,10 @@ export const useAppStore = create<AppState>((set) => ({
 
   setSidebarOpen: (open) =>
     set({ sidebarOpen: open }),
+
+  setNotifications: (notifications) =>
+    set({ notifications }),
+
+  setNotifCount: (count) =>
+    set({ notifCount: count }),
 }))

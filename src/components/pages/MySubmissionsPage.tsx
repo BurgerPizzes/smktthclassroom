@@ -5,11 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, CheckCircle2, Clock, AlertCircle, Star,
   Search, ArrowUpRight, Filter, ArrowUpDown, BookOpen,
-  TrendingUp, Award, BarChart3
+  TrendingUp, Award, BarChart3, Download
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale/id'
+import { toast } from 'sonner'
 
 interface Submission {
   id: string
@@ -167,11 +168,33 @@ export default function MySubmissionsPage() {
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-[var(--glass-text)]">
-          <span className="gradient-text">Submissions</span> Saya
-        </h1>
-        <p className="text-[var(--glass-text-secondary)] text-sm mt-1">Riwayat pengumpulan tugas</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-[var(--glass-text)]">
+            <span className="gradient-text">Submissions</span> Saya
+          </h1>
+          <p className="text-[var(--glass-text-secondary)] text-sm mt-1">Riwayat pengumpulan tugas</p>
+        </div>
+        <button
+          onClick={async () => {
+            try {
+              const res = await fetch('/api/submissions/export' + (classFilter !== 'all' ? `?classId=${classFilter}` : ''))
+              if (res.ok) {
+                const blob = await res.blob()
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = 'nilai-submissions.csv'
+                a.click()
+                URL.revokeObjectURL(url)
+                toast.success('Data nilai berhasil diekspor')
+              } else { toast.error('Gagal mengekspor') }
+            } catch { toast.error('Terjadi kesalahan') }
+          }}
+          className="glass-btn flex items-center gap-2 text-sm shrink-0"
+        >
+          <Download className="w-4 h-4" /> Export
+        </button>
       </div>
 
       {/* Summary Statistics */}
