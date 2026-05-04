@@ -55,6 +55,7 @@ export default function ProfilePage() {
             totalSubmissions: data.stats.totalSubmissions,
             totalStudents: data.stats.totalStudents,
             gradedCount: data.stats.gradedCount,
+            averageGrade: data.stats.averageGrade,
             pendingSubmissions: data.stats.pendingSubmissions,
           })
         }

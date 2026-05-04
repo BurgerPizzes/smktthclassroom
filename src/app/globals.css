@@ -1457,3 +1457,346 @@ html.theme-transition *::after {
 .member-card-siswa::before {
   background: linear-gradient(90deg, #3b82f6, #06b6d4);
 }
+
+/* ===== v10.0 New CSS Utilities ===== */
+
+/* Heatmap cell — for calendar heatmap squares */
+.heatmap-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.4);
+  z-index: 2;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+}
+
+.heatmap-cell-hadir { background: #22c55e; }
+.heatmap-cell-terlambat { background: #f59e0b; }
+.heatmap-cell-tidak { background: #ef4444; }
+.heatmap-cell-empty { background: var(--glass-input-bg); }
+
+/* Sparkline path — for SVG sparkline with draw animation */
+.sparkline-path {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: sparkline-draw 1.5s ease-out forwards;
+}
+
+@keyframes sparkline-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Typing cursor — blinking cursor for typing animation */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: white;
+  margin-left: 2px;
+  animation: typing-blink 0.8s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes typing-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Gradient border animate — animated gradient border that shifts colors */
+.gradient-border-animate {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.gradient-border-animate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  padding: 2px;
+  background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #06b6d4, #667eea);
+  background-size: 300% 300%;
+  animation: gradient-border-shift 4s ease infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gradient-border-animate:hover::before {
+  opacity: 1;
+}
+
+@keyframes gradient-border-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Notification group header — sticky header for date groups */
+.notification-group-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 0.5rem;
+}
+
+/* Reaction emoji — emoji reaction button with pop animation */
+.reaction-emoji {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+.reaction-emoji:hover {
+  transform: scale(1.15);
+  border-color: var(--glass-hover-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.reaction-emoji:active {
+  transform: scale(0.9);
+}
+
+.reaction-emoji.active {
+  background: var(--badge-blue-bg);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.reaction-emoji .emoji-pop {
+  animation: emoji-pop-anim 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes emoji-pop-anim {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* Streak counter — streak number with glow effect */
+.streak-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(249, 115, 22, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--badge-amber-text);
+}
+
+.streak-counter .streak-number {
+  font-size: 1.25rem;
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+  animation: streak-glow 2s ease-in-out infinite;
+}
+
+@keyframes streak-glow {
+  0%, 100% { text-shadow: 0 0 5px rgba(245, 158, 11, 0.2); }
+  50% { text-shadow: 0 0 15px rgba(245, 158, 11, 0.5), 0 0 25px rgba(249, 115, 22, 0.2); }
+}
+
+/* Quick action button — shortcut button with icon and hover scale */
+.quick-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.quick-action-btn:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--glass-shadow-hover);
+  border-color: var(--glass-hover-border);
+  background: var(--glass-hover-bg);
+}
+
+.quick-action-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Motivational card — quote card with subtle gradient and italic text */
+.motivational-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08), rgba(240, 147, 251, 0.05));
+  border: 1px solid rgba(102, 126, 234, 0.12);
+  padding: 1.5rem;
+}
+
+.motivational-card::before {
+  content: '"';
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  font-size: 5rem;
+  font-family: Georgia, serif;
+  color: rgba(102, 126, 234, 0.1);
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Mark all read sweep animation */
+.mark-read-sweep {
+  animation: sweep-read 0.6s ease-out forwards;
+}
+
+@keyframes sweep-read {
+  0% { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+/* Notification type tints */
+.notif-tint-info { background: rgba(59, 130, 246, 0.04); }
+.notif-tint-warning { background: rgba(245, 158, 11, 0.04); }
+.notif-tint-success { background: rgba(34, 197, 94, 0.04); }
+.notif-tint-error { background: rgba(239, 68, 68, 0.04); }
+.notif-tint-assignment { background: rgba(59, 130, 246, 0.04); }
+.notif-tint-announcement { background: rgba(168, 85, 247, 0.04); }
+
+/* Gradient ring for member avatar on hover */
+.avatar-gradient-ring {
+  position: relative;
+  border-radius: 50%;
+  padding: 2px;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.avatar-gradient-ring:hover {
+  background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+  padding: 3px;
+}
+
+/* Welcome banner floating circles animation */
+.welcome-banner-float {
+  animation: welcome-float 6s ease-in-out infinite;
+}
+
+@keyframes welcome-float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-8px) translateX(4px); }
+  50% { transform: translateY(-4px) translateX(-6px); }
+  75% { transform: translateY(-12px) translateX(2px); }
+}
+
+.welcome-banner-float-2 {
+  animation: welcome-float-2 8s ease-in-out infinite;
+}
+
+@keyframes welcome-float-2 {
+  0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+  33% { transform: translateY(-15px) translateX(8px) scale(1.05); }
+  66% { transform: translateY(-5px) translateX(-10px) scale(0.95); }
+}
+
+/* Social login button */
+.social-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  width: 100%;
+}
+
+.social-login-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.social-login-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Custom checkbox for Remember Me */
+.custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.custom-checkbox:checked {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-color: transparent;
+}
+
+.custom-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.custom-checkbox:focus {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Version badge */
+.version-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}

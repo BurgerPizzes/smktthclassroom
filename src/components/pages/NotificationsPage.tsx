@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, Check, CheckCheck, Info, AlertTriangle,
   CheckCircle2, XCircle, Clock, Trash2, FileText,
-  Megaphone, Settings, Filter, Volume2, X
+  Megaphone, Settings, Filter, Volume2, X, ExternalLink, ArrowRight
 } from 'lucide-react'
 import { useAppStore, type PageName } from '@/lib/store'
 import { format, formatDistanceToNow } from 'date-fns'
@@ -24,13 +24,13 @@ interface Notification {
 
 type FilterTab = 'all' | 'tugas' | 'pengumuman' | 'sistem'
 
-const TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; bgCircle: string; filterTab: FilterTab }> = {
-  info: { icon: Info, color: 'text-[var(--badge-blue-text)]', bgCircle: 'bg-[var(--badge-blue-bg)]', filterTab: 'sistem' },
-  warning: { icon: AlertTriangle, color: 'text-[var(--badge-amber-text)]', bgCircle: 'bg-[var(--badge-amber-bg)]', filterTab: 'sistem' },
-  success: { icon: CheckCircle2, color: 'text-[var(--badge-green-text)]', bgCircle: 'bg-[var(--badge-green-bg)]', filterTab: 'sistem' },
-  error: { icon: XCircle, color: 'text-[var(--badge-red-text)]', bgCircle: 'bg-[var(--badge-red-bg)]', filterTab: 'sistem' },
-  assignment: { icon: FileText, color: 'text-[var(--badge-blue-text)]', bgCircle: 'bg-[var(--badge-blue-bg)]', filterTab: 'tugas' },
-  announcement: { icon: Megaphone, color: 'text-[var(--badge-purple-text)]', bgCircle: 'bg-[var(--badge-purple-bg)]', filterTab: 'pengumuman' },
+const TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; bgCircle: string; filterTab: FilterTab; tint: string; actionLabel?: string; actionPage?: PageName }> = {
+  info: { icon: Info, color: 'text-[var(--badge-blue-text)]', bgCircle: 'bg-[var(--badge-blue-bg)]', filterTab: 'sistem', tint: 'notif-tint-info' },
+  warning: { icon: AlertTriangle, color: 'text-[var(--badge-amber-text)]', bgCircle: 'bg-[var(--badge-amber-bg)]', filterTab: 'sistem', tint: 'notif-tint-warning' },
+  success: { icon: CheckCircle2, color: 'text-[var(--badge-green-text)]', bgCircle: 'bg-[var(--badge-green-bg)]', filterTab: 'sistem', tint: 'notif-tint-success' },
+  error: { icon: XCircle, color: 'text-[var(--badge-red-text)]', bgCircle: 'bg-[var(--badge-red-bg)]', filterTab: 'sistem', tint: 'notif-tint-error' },
+  assignment: { icon: FileText, color: 'text-[var(--badge-blue-text)]', bgCircle: 'bg-[var(--badge-blue-bg)]', filterTab: 'tugas', tint: 'notif-tint-assignment', actionLabel: 'Lihat Tugas', actionPage: 'my-submissions' },
+  announcement: { icon: Megaphone, color: 'text-[var(--badge-purple-text)]', bgCircle: 'bg-[var(--badge-purple-bg)]', filterTab: 'pengumuman', tint: 'notif-tint-announcement', actionLabel: 'Lihat Kelas', actionPage: 'classes' },
 }
 
 const FILTER_TABS: { key: FilterTab; label: string; icon: React.ElementType }[] = [
@@ -103,6 +103,7 @@ export default function NotificationsPage() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all')
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set())
   const [soundEnabled, setSoundEnabled] = useState(true)
+  const [markingAllRead, setMarkingAllRead] = useState(false)
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -134,16 +135,21 @@ export default function NotificationsPage() {
   }, [])
 
   const markAllRead = useCallback(async () => {
+    setMarkingAllRead(true)
     try {
       await fetch('/api/notifications', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ markAll: true }),
       })
+      // Add a small delay for the sweep animation
+      await new Promise((r) => setTimeout(r, 600))
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
       toast.success('Semua notifikasi ditandai sudah dibaca')
     } catch {
       // silently fail
+    } finally {
+      setMarkingAllRead(false)
     }
   }, [])
 
@@ -253,8 +259,9 @@ export default function NotificationsPage() {
             <span className="hidden sm:inline">{soundEnabled ? 'Suara On' : 'Suara Off'}</span>
           </button>
           {unreadCount > 0 && (
-            <button onClick={markAllRead} className="btn-glass flex items-center gap-2 text-sm">
-              <CheckCheck className="w-4 h-4" /> Tandai Dibaca
+            <button onClick={markAllRead} className="btn-glass flex items-center gap-2 text-sm" disabled={markingAllRead}>
+              <CheckCheck className={`w-4 h-4 ${markingAllRead ? 'mark-read-sweep' : ''}`} />
+              {markingAllRead ? 'Menandai...' : 'Tandai Dibaca'}
             </button>
           )}
           {notifications.some((n) => n.read) && (
@@ -289,7 +296,9 @@ export default function NotificationsPage() {
       <div className="space-y-6">
         {groups.map((group) => (
           <div key={group.label}>
-            <h3 className="text-sm font-medium text-[var(--glass-text-muted)] mb-3">{group.label}</h3>
+            <div className="notification-group-header">
+              <h3 className="text-sm font-medium text-[var(--glass-text-secondary)]">{group.label}</h3>
+            </div>
             <div className="space-y-2 stagger-in">
               <AnimatePresence>
                 {group.items.map((n) => {
@@ -309,7 +318,7 @@ export default function NotificationsPage() {
                         !n.read ? 'notification-unread-border' : ''
                       } ${hasLink ? 'cursor-pointer hover:bg-[var(--glass-hover-bg)]' : ''} ${
                         isDeleting ? 'notification-exit' : ''
-                      }`}
+                      } ${config.tint || ''}`}
                       onClick={() => handleNotificationClick(n)}
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${config.bgCircle}`}>
@@ -323,7 +332,7 @@ export default function NotificationsPage() {
                           {!n.read && <span className="status-dot status-dot-purple shrink-0" />}
                         </div>
                         <p className="text-xs text-[var(--glass-text-muted)] mt-0.5 line-clamp-2">{n.message}</p>
-                        <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                           <p className="text-xs text-[var(--glass-text-muted)] flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {timeAgo}
@@ -332,6 +341,19 @@ export default function NotificationsPage() {
                             <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
                               Lihat detail →
                             </span>
+                          )}
+                          {/* Action button based on notification type */}
+                          {config.actionLabel && config.actionPage && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPage(config.actionPage!)
+                              }}
+                              className="text-xs px-2 py-0.5 rounded-full bg-gradient-to-r from-[#667eea]/10 to-[#764ba2]/10 text-[var(--badge-purple-text)] font-medium flex items-center gap-1 hover:from-[#667eea]/20 hover:to-[#764ba2]/20 transition-all"
+                            >
+                              <ExternalLink className="w-2.5 h-2.5" />
+                              {config.actionLabel}
+                            </button>
                           )}
                         </div>
                       </div>

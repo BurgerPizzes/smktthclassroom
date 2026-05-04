@@ -37,22 +37,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Only guru/admin can create announcements
-    if (user.role !== 'guru' && user.role !== 'admin') {
+    const { title, content, classId, priority, isDiscussion } = await request.json()
+
+    // Only guru/admin can create announcements; students can create discussions
+    if (!isDiscussion && user.role !== 'guru' && user.role !== 'admin') {
       return NextResponse.json({ error: 'Hanya guru yang bisa membuat pengumuman' }, { status: 403 })
     }
 
-    const { title, content, classId, priority } = await request.json()
+    if (!title || !content) {
+      return NextResponse.json({ error: 'Judul dan konten wajib diisi' }, { status: 400 })
+    }
 
-    if (!title || !content || !classId) {
-      return NextResponse.json({ error: 'Judul, konten, dan kelas wajib diisi' }, { status: 400 })
+    // For discussions without a classId, find the user's first class
+    let effectiveClassId = classId
+    if (!effectiveClassId) {
+      const userClass = await db.classUser.findFirst({
+        where: { userId: user.id },
+        select: { classId: true },
+      })
+      effectiveClassId = userClass?.classId
+      if (!effectiveClassId) {
+        return NextResponse.json({ error: 'Anda harus tergabung dalam kelas' }, { status: 400 })
+      }
     }
 
     const announcement = await db.announcement.create({
       data: {
         title,
         content,
-        classId,
+        classId: effectiveClassId,
         priority: priority || 'normal',
         createdBy: user.id,
       },

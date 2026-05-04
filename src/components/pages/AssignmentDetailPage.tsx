@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, Clock, ArrowLeft, Upload, Send, MessageSquare,
   CheckCircle2, XCircle, Star, AlertCircle, Download, Trash2,
-  Loader2, File, Image, FileCheck2
+  Loader2, File, Image, FileCheck2, FolderOpen, Eye
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'
@@ -31,6 +31,8 @@ export default function AssignmentDetailPage() {
   const [gradeInput, setGradeInput] = useState<Record<string, string>>({})
   const [feedbackInput, setFeedbackInput] = useState<Record<string, string>>({})
   const [commentText, setCommentText] = useState('')
+  const [classResources, setClassResources] = useState<any[]>([])
+  const [downloadCounts, setDownloadCounts] = useState<Record<string, number>>({})
 
   useEffect(() => {
     if (!assignmentId) return
@@ -63,6 +65,40 @@ export default function AssignmentDetailPage() {
     }
     fetchData()
   }, [assignmentId, user?.id, user?.role])
+
+  // Fetch class resources
+  useEffect(() => {
+    if (!assignment?.classId) return
+    const fetchResources = async () => {
+      try {
+        const res = await fetch(`/api/resources?classId=${assignment.classId}`)
+        if (res.ok) {
+          const data = await res.json()
+          setClassResources(data)
+          // Initialize download counts with random demo values
+          const counts: Record<string, number> = {}
+          data.forEach((r: any) => {
+            counts[r.id] = Math.floor(Math.random() * 25) + 1
+          })
+          // Also add counts for assignment attachments
+          if (assignment?.attachments) {
+            try {
+              const atts = JSON.parse(assignment.attachments)
+              if (Array.isArray(atts)) {
+                atts.forEach((a: any, idx: number) => {
+                  counts[`att-${idx}`] = Math.floor(Math.random() * 30) + 1
+                })
+              }
+            } catch { /* ignore */ }
+          }
+          setDownloadCounts(counts)
+        }
+      } catch {
+        // silently fail
+      }
+    }
+    fetchResources()
+  }, [assignment?.classId, assignment?.attachments])
 
   const getTypeGradient = (type: string) => {
     const t = type?.toUpperCase()
@@ -221,6 +257,32 @@ export default function AssignmentDetailPage() {
   const isImageFile = (type: string) => type.startsWith('image/')
   const isPdfFile = (type: string) => type === 'application/pdf'
 
+  // File type badge config
+  const getFileTypeBadge = (url: string) => {
+    const ext = url.split('.').pop()?.toLowerCase() || ''
+    const badges: Record<string, { label: string; color: string; bg: string }> = {
+      pdf: { label: 'PDF', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10' },
+      zip: { label: 'ZIP', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10' },
+      rar: { label: 'RAR', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10' },
+      png: { label: 'PNG', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+      jpg: { label: 'JPG', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+      jpeg: { label: 'JPG', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+      gif: { label: 'GIF', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+      svg: { label: 'SVG', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+      doc: { label: 'DOC', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
+      docx: { label: 'DOCX', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
+      xls: { label: 'XLS', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+      xlsx: { label: 'XLSX', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+      ppt: { label: 'PPT', color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-500/10' },
+      pptx: { label: 'PPTX', color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-500/10' },
+      mp4: { label: 'MP4', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
+      mp3: { label: 'MP3', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
+      pkt: { label: 'PKT', color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-500/10' },
+      psd: { label: 'PSD', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
+    }
+    return badges[ext] || { label: ext.toUpperCase() || 'FILE', color: 'text-[var(--glass-text-muted)]', bg: 'bg-[var(--chip-bg)]' }
+  }
+
   if (loading) {
     return (
       <div className="p-6 space-y-6">
@@ -274,6 +336,7 @@ export default function AssignmentDetailPage() {
       <div className="px-4 md:px-6 pb-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Details */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Deskripsi */}
           <div className="glass-card p-6">
             <h2 className="font-semibold text-[var(--glass-text)] mb-3 flex items-center gap-2">
               <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" /> Deskripsi
@@ -282,6 +345,60 @@ export default function AssignmentDetailPage() {
               {assignment?.description || 'Tidak ada deskripsi'}
             </p>
           </div>
+
+          {/* Resource Materials */}
+          {classResources.length > 0 && (
+            <div className="glass-card p-6">
+              <h2 className="font-semibold text-[var(--glass-text)] mb-3 flex items-center gap-2">
+                <FolderOpen className="w-5 h-5 text-amber-600 dark:text-amber-400" /> Materi Pendukung
+              </h2>
+              <p className="text-xs text-[var(--glass-text-muted)] mb-3">Sumber belajar dari kelas {assignment?.class?.name || ''}</p>
+              <div className="space-y-2">
+                {classResources.slice(0, 5).map((resource: any) => {
+                  const badge = getFileTypeBadge(resource.fileUrl || resource.title || '')
+                  const dlCount = downloadCounts[resource.id] || 0
+                  return (
+                    <div key={resource.id} className="interactive-card p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${badge.bg} ${badge.color} shrink-0`}>
+                          {badge.label}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm text-[var(--glass-text)] font-medium truncate">{resource.title}</p>
+                          <p className="text-[10px] text-[var(--glass-text-muted)]">{resource.fileType?.toUpperCase() || 'FILE'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="flex items-center gap-1 text-[10px] text-[var(--glass-text-muted)]">
+                          <Download className="w-3 h-3" /> {dlCount}
+                        </span>
+                        <a
+                          href={resource.fileUrl}
+                          download
+                          className="p-1.5 rounded-lg hover:bg-[var(--glass-hover-bg)] text-[var(--glass-text-muted)] hover:text-[var(--glass-text)] transition-colors"
+                          onClick={() => {
+                            setDownloadCounts(prev => ({ ...prev, [resource.id]: (prev[resource.id] || 0) + 1 }))
+                          }}
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </a>
+                        {(resource.fileType === 'pdf' || resource.fileUrl?.endsWith('.pdf')) && (
+                          <a
+                            href={resource.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg hover:bg-[var(--glass-hover-bg)] text-[var(--glass-text-muted)] hover:text-[var(--glass-text)] transition-colors"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Siswa: Submission area */}
           {!isGuru && (
@@ -306,9 +423,17 @@ export default function AssignmentDetailPage() {
                   </div>
                   {mySubmission.content && <p className="text-sm text-[var(--glass-text-secondary)] mb-2">{mySubmission.content}</p>}
                   {mySubmission.fileUrl && (
-                    <a href={mySubmission.fileUrl} download className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline">
-                      <Download className="w-3 h-3" /> {mySubmission.fileUrl.split('/').pop()}
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <a href={mySubmission.fileUrl} download className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline">
+                        <Download className="w-3 h-3" /> {mySubmission.fileUrl.split('/').pop()}
+                      </a>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${getFileTypeBadge(mySubmission.fileUrl).bg} ${getFileTypeBadge(mySubmission.fileUrl).color}`}>
+                        {getFileTypeBadge(mySubmission.fileUrl).label}
+                      </span>
+                      <span className="flex items-center gap-0.5 text-[10px] text-[var(--glass-text-muted)]">
+                        <Download className="w-3 h-3" /> {downloadCounts['my-sub'] || 0}
+                      </span>
+                    </div>
                   )}
                   {mySubmission.status === 'graded' && (
                     <div className="mt-3 p-3 rounded-lg bg-[var(--badge-green-bg)] border border-emerald-500/20">
@@ -453,10 +578,15 @@ export default function AssignmentDetailPage() {
                       </div>
                       {sub.content && <p className="text-xs text-[var(--glass-text-secondary)]">{sub.content}</p>}
                       {sub.fileUrl && (
-                      <a href={sub.fileUrl} download className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline">
-                        <Download className="w-3 h-3" /> {sub.fileUrl.split('/').pop()}
-                      </a>
-                    )}
+                        <div className="flex items-center gap-2">
+                          <a href={sub.fileUrl} download className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline">
+                            <Download className="w-3 h-3" /> {sub.fileUrl.split('/').pop()}
+                          </a>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${getFileTypeBadge(sub.fileUrl).bg} ${getFileTypeBadge(sub.fileUrl).color}`}>
+                            {getFileTypeBadge(sub.fileUrl).label}
+                          </span>
+                        </div>
+                      )}
 
                       {sub.status !== 'graded' && (
                         <div className="flex items-center gap-2 pt-2">

@@ -14,12 +14,23 @@ export async function GET() {
     let totalSubmissions = 0
     let pendingGrading = 0
     let pendingSubmissions = 0
+    let totalStudents = 0
+    let gradedCount = 0
+    let averageGrade = 0
 
     if (user.role === 'admin') {
       totalClasses = await db.class.count()
       totalAssignments = await db.assignment.count({ where: { status: 'active' } })
       totalSubmissions = await db.submission.count()
       pendingGrading = await db.submission.count({ where: { status: 'submitted' } })
+      totalStudents = await db.user.count({ where: { role: 'siswa' } })
+      gradedCount = await db.submission.count({ where: { status: 'graded' } })
+      const gradedSubs = await db.submission.findMany({
+        where: { status: 'graded', grade: { not: null } },
+        select: { grade: true },
+      })
+      const validGrades = gradedSubs.map(s => s.grade).filter((g): g is number => g !== null && Number.isFinite(g))
+      averageGrade = validGrades.length > 0 ? Math.round(validGrades.reduce((sum, g) => sum + g, 0) / validGrades.length) : 0
     } else if (user.role === 'guru') {
       // Get teacher's classes
       const teacherClasses = await db.classUser.findMany({
@@ -42,6 +53,19 @@ export async function GET() {
       pendingGrading = await db.submission.count({
         where: { status: 'submitted', assignmentId: { in: assignmentIds } },
       })
+      // Count students in teacher's classes
+      totalStudents = await db.classUser.count({
+        where: { classId: { in: classIds }, role: 'siswa' },
+      })
+      gradedCount = await db.submission.count({
+        where: { status: 'graded', assignmentId: { in: assignmentIds } },
+      })
+      const gradedSubs = await db.submission.findMany({
+        where: { status: 'graded', assignmentId: { in: assignmentIds }, grade: { not: null } },
+        select: { grade: true },
+      })
+      const validGrades = gradedSubs.map(s => s.grade).filter((g): g is number => g !== null && Number.isFinite(g))
+      averageGrade = validGrades.length > 0 ? Math.round(validGrades.reduce((sum, g) => sum + g, 0) / validGrades.length) : 0
     } else {
       // Student
       const studentClasses = await db.classUser.findMany({
@@ -66,6 +90,16 @@ export async function GET() {
           id: { notIn: submittedAssignmentIds },
         },
       })
+      // Student's own graded count and average
+      gradedCount = await db.submission.count({
+        where: { userId: user.id, status: 'graded' },
+      })
+      const myGradedSubs = await db.submission.findMany({
+        where: { userId: user.id, status: 'graded', grade: { not: null } },
+        select: { grade: true },
+      })
+      const myValidGrades = myGradedSubs.map(s => s.grade).filter((g): g is number => g !== null && Number.isFinite(g))
+      averageGrade = myValidGrades.length > 0 ? Math.round(myValidGrades.reduce((sum, g) => sum + g, 0) / myValidGrades.length) : 0
     }
 
     // Announcements from user's classes
@@ -110,7 +144,7 @@ export async function GET() {
     })
 
     return NextResponse.json({
-      stats: { totalClasses, totalAssignments, totalSubmissions, pendingGrading, pendingSubmissions },
+      stats: { totalClasses, totalAssignments, totalSubmissions, pendingGrading, pendingSubmissions, totalStudents, gradedCount, averageGrade },
       announcements,
       assignments,
       user: { id: user.id, name: user.name, role: user.role },

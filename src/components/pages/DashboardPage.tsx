@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import {
   BookOpen, Users, FileText, Bell, Clock, TrendingUp,
   AlertTriangle, CheckCircle2, Calendar, ArrowRight, Plus,
-  Sparkles, Target, Award, ClipboardList
+  Sparkles, Target, Award, ClipboardList, Zap, BarChart3, MessageSquare, Upload, ClipboardCheck, Activity
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'
@@ -58,6 +58,40 @@ function AnimatedCounter({ target, duration = 1500 }: { target: number; duration
   return <span>{count}</span>
 }
 
+// Mini sparkline SVG component
+function MiniSparkline({ data, color = '#667eea', width = 60, height = 24 }: { data: number[]; color?: string; width?: number; height?: number }) {
+  if (data.length < 2) return null
+  const max = Math.max(...data, 1)
+  const min = Math.min(...data, 0)
+  const range = max - min || 1
+  const points = data.map((v, i) => `${(i / (data.length - 1)) * width},${height - ((v - min) / range) * (height - 4) - 2}`).join(' ')
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="sparkline-path"
+      />
+    </svg>
+  )
+}
+
+// Indonesian motivational quotes
+const MOTIVATIONAL_QUOTES = [
+  { text: 'Pendidikan adalah senjata paling ampuh yang bisa kamu gunakan untuk mengubah dunia.', author: 'Nelson Mandela' },
+  { text: 'Masa depan milik mereka yang percaya pada keindahan mimpi mereka.', author: 'Eleanor Roosevelt' },
+  { text: 'Belajar tanpa berpikir adalah usaha yang sia-sia, berpikir tanpa belajar adalah bahaya.', author: 'Konfusius' },
+  { text: 'Jangan biarkan apa yang tidak bisa kamu lakukan mengganggu apa yang bisa kamu lakukan.', author: 'John Wooden' },
+  { text: 'Kesuksesan adalah hasil dari persiapan, kerja keras, dan belajar dari kegagalan.', author: 'Colin Powell' },
+  { text: 'Satu-satunya cara untuk melakukan pekerjaan hebat adalah mencintai apa yang kamu lakukan.', author: 'Steve Jobs' },
+  { text: 'Ilmu tanpa agama buta, agama tanpa ilmu lumpuh.', author: 'Albert Einstein' },
+  { text: 'Rasa ingin tahu adalah ibu dari segala pengetahuan.', author: 'Peribahasa' },
+]
+
 function CircularProgress({ value, max, size = 56, strokeWidth = 4 }: { value: number; max: number; size?: number; strokeWidth?: number }) {
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
@@ -101,6 +135,7 @@ export default function DashboardPage() {
   const { user, setPage, setSidebarOpen } = useAppStore()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [dailyQuote] = useState(() => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -189,6 +224,10 @@ export default function DashboardPage() {
         animate={{ opacity: 1, y: 0 }}
         className="welcome-banner"
       >
+        {/* Floating decorative circles */}
+        <div className="welcome-banner-float absolute top-4 right-12 w-16 h-16 rounded-full bg-white/5 pointer-events-none" />
+        <div className="welcome-banner-float-2 absolute bottom-6 right-32 w-10 h-10 rounded-full bg-white/8 pointer-events-none" />
+        <div className="welcome-banner-float absolute top-8 right-52 w-6 h-6 rounded-full bg-white/10 pointer-events-none" />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -276,37 +315,43 @@ export default function DashboardPage() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, idx) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="glass-card-glow p-5 group"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg ${stat.shadowColor} group-hover:scale-110 transition-transform duration-300`}>
-                <stat.icon className="w-5 h-5 text-white" />
+        {statCards.map((stat, idx) => {
+          // Generate pseudo-random sparkline data based on stat value
+          const sparklineData = Array.from({ length: 7 }, (_, i) => Math.max(0, stat.value * (0.5 + Math.sin(i * 0.8 + idx) * 0.4)))
+          return (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              className="glass-card-glow p-5 group"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg ${stat.shadowColor} group-hover:scale-110 transition-transform duration-300`}>
+                  <stat.icon className="w-5 h-5 text-white" />
+                </div>
+                <div className="opacity-60 group-hover:opacity-100 transition-opacity">
+                  <MiniSparkline data={sparklineData} color={stat.color.includes('blue') ? '#3b82f6' : stat.color.includes('purple') ? '#8b5cf6' : stat.color.includes('amber') ? '#f59e0b' : stat.color.includes('rose') ? '#f43f5e' : '#22c55e'} />
+                </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-[var(--glass-text-muted)] group-hover:text-[var(--glass-text-secondary)] group-hover:translate-x-1 transition-all duration-300" />
-            </div>
-            <p className="text-[var(--glass-text-secondary)] text-sm">{stat.label}</p>
-            <p className="text-2xl font-bold text-[var(--glass-text)] mt-1">
-              <AnimatedCounter target={stat.value} />
-            </p>
-            <div className="mt-3">
-              <div className="progress-bar">
-                <motion.div
-                  className="progress-bar-fill"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min((stat.value / Math.max(stat.value, 1)) * 100, 100)}%` }}
-                  transition={{ duration: 0.8, delay: idx * 0.1 + 0.3 }}
-                  style={{ background: `linear-gradient(90deg, var(--subject-color, #667eea), var(--subject-color, #764ba2))` }}
-                />
+              <p className="text-[var(--glass-text-secondary)] text-sm">{stat.label}</p>
+              <p className="text-2xl font-bold text-[var(--glass-text)] mt-1">
+                <AnimatedCounter target={stat.value} />
+              </p>
+              <div className="mt-3">
+                <div className="progress-bar">
+                  <motion.div
+                    className="progress-bar-fill"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min((stat.value / Math.max(stat.value, 1)) * 100, 100)}%` }}
+                    transition={{ duration: 0.8, delay: idx * 0.1 + 0.3 }}
+                    style={{ background: `linear-gradient(90deg, var(--subject-color, #667eea), var(--subject-color, #764ba2))` }}
+                  />
+                </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          )
+        })}
       </div>
 
       {/* Student Progress Bar (only for students) */}
@@ -494,6 +539,23 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
+      {/* Motivational Quote Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45 }}
+        className="motivational-card"
+      >
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4 text-[var(--badge-purple-text)]" />
+            <span className="text-xs font-medium text-[var(--badge-purple-text)]">Kutipan Hari Ini</span>
+          </div>
+          <p className="text-sm italic text-[var(--glass-text)] leading-relaxed">{dailyQuote.text}</p>
+          <p className="text-xs text-[var(--glass-text-muted)] mt-2">— {dailyQuote.author}</p>
+        </div>
+      </motion.div>
+
       {/* Quick Actions */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -502,24 +564,88 @@ export default function DashboardPage() {
         className="glass-card p-6"
       >
         <h2 className="text-lg font-semibold text-[var(--glass-text)] mb-4">Aksi Cepat</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {[
-            { icon: BookOpen, label: 'Kelas Saya', page: 'classes' as const, color: 'from-blue-500 to-cyan-500' },
-            { icon: FileText, label: 'Tugas', page: 'my-submissions' as const, color: 'from-purple-500 to-pink-500' },
-            { icon: Calendar, label: 'Kalender', page: 'calendar' as const, color: 'from-amber-500 to-orange-500' },
-            { icon: Users, label: 'Diskusi', page: 'discussions' as const, color: 'from-emerald-500 to-green-500' },
+            { icon: FileText, label: 'Buat Tugas', page: 'classes' as const, color: 'from-blue-500 to-cyan-500' },
+            { icon: ClipboardCheck, label: 'Lihat Absensi', page: 'attendance' as const, color: 'from-emerald-500 to-green-500' },
+            { icon: MessageSquare, label: 'Diskusi', page: 'discussions' as const, color: 'from-purple-500 to-pink-500' },
+            { icon: BookOpen, label: 'Kelas Saya', page: 'classes' as const, color: 'from-amber-500 to-orange-500' },
+            { icon: Calendar, label: 'Kalender', page: 'calendar' as const, color: 'from-rose-500 to-pink-500' },
+            { icon: Upload, label: 'Sumber Belajar', page: 'learning-resources' as const, color: 'from-indigo-500 to-violet-500' },
           ].map((action) => (
             <button
               key={action.label}
               onClick={() => setPage(action.page)}
-              className="interactive-card p-4 text-center group"
+              className="quick-action-btn group"
             >
-              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mx-auto mb-2 shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
                 <action.icon className="w-5 h-5 text-white" />
               </div>
-              <p className="text-sm text-[var(--glass-text-secondary)] group-hover:text-[var(--glass-text)] transition-colors">{action.label}</p>
+              <p className="text-xs text-[var(--glass-text-secondary)] group-hover:text-[var(--glass-text)] transition-colors leading-tight">{action.label}</p>
             </button>
           ))}
+        </div>
+      </motion.div>
+
+      {/* Activity Feed */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.55 }}
+        className="glass-card p-6"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-[var(--glass-text)] flex items-center gap-2">
+            <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Aktivitas Terbaru
+          </h2>
+        </div>
+        <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+          {data?.announcements && data.announcements.length > 0 ? (
+            data.announcements.slice(0, 4).map((ann, idx) => (
+              <motion.div
+                key={ann.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="interactive-card p-3 flex items-center gap-3"
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shrink-0 text-white text-xs font-bold">
+                  {ann.creator?.name?.charAt(0) || 'S'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-[var(--glass-text)] truncate">{ann.creator?.name} memposting pengumuman</p>
+                  <p className="text-xs text-[var(--glass-text-muted)] truncate">{ann.title} · {ann.className}</p>
+                </div>
+                <span className="text-[10px] text-[var(--glass-text-muted)] shrink-0">
+                  {format(new Date(ann.createdAt), 'HH:mm')}
+                </span>
+              </motion.div>
+            ))
+          ) : (
+            <div className="empty-state py-6">
+              <Activity className="w-8 h-8 mb-2" />
+              <p className="text-sm">Belum ada aktivitas</p>
+            </div>
+          )}
+          {data?.assignments && data.assignments.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="interactive-card p-3 flex items-center gap-3"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0 text-white text-xs font-bold">
+                <FileText className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-[var(--glass-text)] truncate">Tugas baru ditambahkan</p>
+                <p className="text-xs text-[var(--glass-text-muted)] truncate">{data.assignments[0].title} · {data.assignments[0].className}</p>
+              </div>
+              <span className="text-[10px] text-[var(--glass-text-muted)] shrink-0">
+                {format(new Date(data.assignments[0].dueDate), 'dd MMM')}
+              </span>
+            </motion.div>
+          )}
         </div>
       </motion.div>
     </div>

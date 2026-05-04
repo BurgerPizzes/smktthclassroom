@@ -19,6 +19,7 @@ export type PageName =
   | 'profile'
   | 'change-password'
   | 'notifications'
+  | 'progress-analytics'
 
 interface UserInfo {
   id: string

@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await getSession()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const { searchParams } = new URL(request.url)
+    const filterClassId = searchParams.get('classId')
 
     // Get resources from classes the user is enrolled in
     let classIds: string[] = []
@@ -22,6 +25,11 @@ export async function GET() {
         select: { classId: true },
       })
       classIds = userClasses.map(uc => uc.classId)
+    }
+
+    // If classId filter provided, only use it if user has access
+    if (filterClassId && classIds.includes(filterClassId)) {
+      classIds = [filterClassId]
     }
 
     const resources = await db.resource.findMany({

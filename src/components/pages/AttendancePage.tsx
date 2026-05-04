@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   UserCheck, UserX, Clock, Calendar, CheckCircle2, XCircle,
-  AlertCircle, Download, TrendingUp, BarChart3
+  AlertCircle, Download, TrendingUp, BarChart3, Flame, Target,
+  Users as UsersIcon, Filter
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
-import { format, subDays, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns'
+import { format, subDays, startOfMonth, endOfMonth, isWithinInterval, parseISO, subMonths, startOfWeek, eachDayOfInterval, getDay, isSameDay } from 'date-fns'
 import { id as localeId } from 'date-fns/locale/id'
 import { toast } from 'sonner'
 
@@ -45,6 +46,9 @@ export default function AttendancePage() {
   const [teacherClasses, setTeacherClasses] = useState<ClassInfo[]>([])
   const [selectedClassId, setSelectedClassId] = useState<string>('')
   const [students, setStudents] = useState<StudentInfo[]>([])
+  const [dateRangeStart, setDateRangeStart] = useState(format(subDays(new Date(), 7), 'yyyy-MM-dd'))
+  const [dateRangeEnd, setDateRangeEnd] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [showWeeklySummary, setShowWeeklySummary] = useState(false)
 
   const isGuru = user?.role === 'guru' || user?.role === 'admin'
 
@@ -242,6 +246,83 @@ export default function AttendancePage() {
       tidak: myRecords.filter((r) => r.status === 'tidak').length,
       terlambat: myRecords.filter((r) => r.status === 'terlambat').length,
     }
+    const totalRecords = stats.hadir + stats.tidak + stats.terlambat
+    const attendanceRate = totalRecords > 0 ? Math.round((stats.hadir / totalRecords) * 100) : 0
+    const attendanceGoal = 95
+    const goalProgress = Math.min((attendanceRate / attendanceGoal) * 100, 100)
+
+    // Calculate streak: consecutive days of 'hadir' from most recent
+    const streak = (() => {
+      const sorted = [...myRecords]
+        .filter((r) => r.status === 'hadir')
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      if (sorted.length === 0) return 0
+      let count = 1
+      for (let i = 1; i < sorted.length; i++) {
+        const prev = new Date(sorted[i - 1].date)
+        const curr = new Date(sorted[i].date)
+        const diffDays = Math.round((prev.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24))
+        if (diffDays === 1) count++
+        else break
+      }
+      return count
+    })()
+
+    // Calendar heatmap data (last 3 months)
+    const heatmapData = (() => {
+      const now = new Date()
+      const threeMonthsAgo = subMonths(now, 3)
+      const start = startOfWeek(threeMonthsAgo, { weekStartsOn: 1 })
+      const end = now
+      const days = eachDayOfInterval({ start, end })
+      return days.map((day) => {
+        const dateStr = format(day, 'yyyy-MM-dd')
+        const dayRecord = myRecords.find((r) => {
+          try {
+            const d = typeof r.date === 'string' ? parseISO(r.date) : new Date(r.date)
+            return format(d, 'yyyy-MM-dd') === dateStr
+          } catch { return false }
+        })
+        return {
+          date: day,
+          dateStr,
+          status: dayRecord?.status || null,
+          isFuture: day > now,
+        }
+      })
+    })()
+
+    // Group heatmap data by week for rendering
+    const heatmapWeeks = (() => {
+      const weeks: typeof heatmapData[] = []
+      let currentWeek: typeof heatmapData = []
+      heatmapData.forEach((day) => {
+        const dayOfWeek = getDay(day.date)
+        if (dayOfWeek === 1 && currentWeek.length > 0) {
+          weeks.push(currentWeek)
+          currentWeek = []
+        }
+        currentWeek.push(day)
+      })
+      if (currentWeek.length > 0) weeks.push(currentWeek)
+      return weeks
+    })()
+
+    // Month labels for heatmap
+    const heatmapMonths = (() => {
+      const months: { label: string; colIndex: number }[] = []
+      let lastMonth = ''
+      heatmapWeeks.forEach((week, weekIdx) => {
+        const monthLabel = format(week[0].date, 'MMM', { locale: localeId })
+        if (monthLabel !== lastMonth) {
+          months.push({ label: monthLabel, colIndex: weekIdx })
+          lastMonth = monthLabel
+        }
+      })
+      return months
+    })()
+
+    const dayLabels = ['Sen', '', 'Rab', '', 'Jum', '', 'Min']
 
     return (
       <div className="p-4 md:p-6 space-y-6">
@@ -265,6 +346,133 @@ export default function AttendancePage() {
               <p className="text-xs text-[var(--glass-text-secondary)]">{s.label}</p>
             </div>
           ))}
+        </div>
+
+        {/* Streak Counter & Attendance Goal */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="glass-card p-5 flex items-center gap-4">
+            <div className="streak-counter">
+              <Flame className="w-5 h-5" />
+              <span className="streak-number">{streak}</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-[var(--glass-text)]">Streak Kehadiran</p>
+              <p className="text-xs text-[var(--glass-text-muted)]">{streak > 0 ? `${streak} hari berturut-turut hadir` : 'Belum ada streak'}</p>
+            </div>
+          </div>
+          <div className="glass-card p-5">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-[var(--badge-purple-text)]" />
+                <span className="text-sm font-medium text-[var(--glass-text)]">Target Kehadiran</span>
+              </div>
+              <span className={`text-sm font-bold ${attendanceRate >= attendanceGoal ? 'text-[var(--badge-green-text)]' : 'text-[var(--badge-amber-text)]'}`}>
+                {attendanceRate}% / {attendanceGoal}%
+              </span>
+            </div>
+            <div className="progress-bar h-3 rounded-full">
+              <motion.div
+                className="progress-bar-fill rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${goalProgress}%` }}
+                transition={{ duration: 1, ease: 'easeOut' }}
+                style={{
+                  background: attendanceRate >= attendanceGoal
+                    ? 'linear-gradient(90deg, #22c55e, #16a34a)'
+                    : 'linear-gradient(90deg, #667eea, #764ba2)'
+                }}
+              />
+            </div>
+            <p className="text-xs text-[var(--glass-text-muted)] mt-1.5">
+              {attendanceRate >= attendanceGoal ? '🎉 Target tercapai!' : `${attendanceGoal - attendanceRate}% lagi menuju target`}
+            </p>
+          </div>
+        </div>
+
+        {/* Calendar Heatmap */}
+        <div className="glass-card p-5">
+          <h2 className="font-semibold text-[var(--glass-text)] mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-[var(--badge-purple-text)]" /> Peta Kehadiran (3 Bulan)
+          </h2>
+          <div className="overflow-x-auto custom-scrollbar pb-2">
+            <div className="min-w-[600px]">
+              {/* Month labels */}
+              <div className="flex ml-8 mb-1">
+                {heatmapMonths.map((m, i) => (
+                  <span
+                    key={i}
+                    className="text-[10px] text-[var(--glass-text-muted)] font-medium"
+                    style={{
+                      position: 'relative',
+                      left: `${m.colIndex * 14}px`,
+                      width: 0,
+                      overflow: 'visible',
+                    }}
+                  >
+                    {m.label}
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-0.5">
+                {/* Day labels */}
+                <div className="flex flex-col gap-0.5 mr-1">
+                  {dayLabels.map((label, i) => (
+                    <div key={i} className="h-[12px] flex items-center">
+                      <span className="text-[9px] text-[var(--glass-text-muted)] leading-none">{label}</span>
+                    </div>
+                  ))}
+                </div>
+                {/* Heatmap grid */}
+                {heatmapWeeks.map((week, weekIdx) => (
+                  <div key={weekIdx} className="flex flex-col gap-0.5">
+                    {week.map((day) => {
+                      const cellClass = day.isFuture
+                        ? 'heatmap-cell heatmap-cell-empty'
+                        : day.status === 'hadir'
+                        ? 'heatmap-cell heatmap-cell-hadir'
+                        : day.status === 'terlambat'
+                        ? 'heatmap-cell heatmap-cell-terlambat'
+                        : day.status === 'tidak'
+                        ? 'heatmap-cell heatmap-cell-tidak'
+                        : 'heatmap-cell heatmap-cell-empty'
+                      return (
+                        <div
+                          key={day.dateStr}
+                          className={cellClass}
+                          title={day.isFuture ? '' : `${format(day.date, 'dd MMM yyyy', { locale: localeId })}: ${day.status || 'Tidak ada data'}`}
+                        />
+                      )
+                    })}
+                  </div>
+                ))}
+              </div>
+              {/* Legend */}
+              <div className="flex items-center gap-4 mt-3">
+                <span className="text-[10px] text-[var(--glass-text-muted)]">Kurang</span>
+                <div className="flex gap-0.5">
+                  <div className="heatmap-cell heatmap-cell-empty" />
+                  <div className="heatmap-cell heatmap-cell-hadir" />
+                  <div className="heatmap-cell heatmap-cell-terlambat" />
+                  <div className="heatmap-cell heatmap-cell-tidak" />
+                </div>
+                <span className="text-[10px] text-[var(--glass-text-muted)]">Lebih</span>
+              </div>
+              <div className="flex items-center gap-4 mt-1">
+                <span className="flex items-center gap-1 text-[10px] text-[var(--glass-text-muted)]">
+                  <span className="w-2 h-2 rounded-sm bg-emerald-500" /> Hadir
+                </span>
+                <span className="flex items-center gap-1 text-[10px] text-[var(--glass-text-muted)]">
+                  <span className="w-2 h-2 rounded-sm bg-amber-500" /> Terlambat
+                </span>
+                <span className="flex items-center gap-1 text-[10px] text-[var(--glass-text-muted)]">
+                  <span className="w-2 h-2 rounded-sm bg-red-500" /> Tidak
+                </span>
+                <span className="flex items-center gap-1 text-[10px] text-[var(--glass-text-muted)]">
+                  <span className="w-2 h-2 rounded-sm bg-[var(--glass-input-bg)]" /> Tidak ada
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* History */}
@@ -527,11 +735,204 @@ export default function AttendancePage() {
         </button>
       </div>
 
+      {/* Weekly Summary View */}
+      {isGuru && selectedClassId && (
+        <div className="glass-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-[var(--glass-text)] flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-purple-500" /> Ringkasan Mingguan
+            </h3>
+            <button
+              onClick={() => setShowWeeklySummary(!showWeeklySummary)}
+              className="category-chip text-xs"
+            >
+              {showWeeklySummary ? 'Tutup' : 'Lihat Detail'}
+            </button>
+          </div>
+
+          {/* Compact weekly bar */}
+          <div className="flex items-end gap-1.5 h-20">
+            {(() => {
+              const now = new Date()
+              const weekStart = startOfWeek(now, { weekStartsOn: 1 })
+              return Array.from({ length: 5 }, (_, i) => {
+                const date = new Date(weekStart)
+                date.setDate(date.getDate() + i)
+                const dateStr = format(date, 'yyyy-MM-dd')
+                const dayRecords = records.filter((r) => {
+                  try {
+                    const d = typeof r.date === 'string' ? parseISO(r.date) : new Date(r.date)
+                    return format(d, 'yyyy-MM-dd') === dateStr
+                  } catch { return false }
+                })
+                const hadir = dayRecords.filter((r) => r.status === 'hadir').length
+                const terlambat = dayRecords.filter((r) => r.status === 'terlambat').length
+                const tidak = dayRecords.filter((r) => r.status === 'tidak').length
+                const total = hadir + terlambat + tidak
+                const rate = total > 0 ? Math.round((hadir / total) * 100) : 0
+                return (
+                  <div key={dateStr} className="flex-1 flex flex-col items-center gap-0.5">
+                    <span className="text-[9px] font-medium" style={{ color: rate >= 80 ? '#22c55e' : rate >= 50 ? '#f59e0b' : rate > 0 ? '#ef4444' : 'var(--glass-text-muted)' }}>
+                      {rate > 0 ? `${rate}%` : '-'}
+                    </span>
+                    <div className="w-full h-12 flex flex-col-reverse gap-0.5" style={{ minHeight: '12px' }}>
+                      {hadir > 0 && <div className="w-full bg-emerald-500 rounded-sm" style={{ height: `${Math.max((hadir / Math.max(total, 1)) * 100, 10)}%`, minHeight: '3px' }} />}
+                      {terlambat > 0 && <div className="w-full bg-amber-500 rounded-sm" style={{ height: `${Math.max((terlambat / Math.max(total, 1)) * 100, 10)}%`, minHeight: '3px' }} />}
+                      {tidak > 0 && <div className="w-full bg-red-500 rounded-sm" style={{ height: `${Math.max((tidak / Math.max(total, 1)) * 100, 10)}%`, minHeight: '3px' }} />}
+                    </div>
+                    <span className="text-[9px] text-[var(--glass-text-muted)]">{format(date, 'EEE', { locale: localeId })}</span>
+                  </div>
+                )
+              })
+            })()}
+          </div>
+
+          {/* Expanded weekly summary */}
+          {showWeeklySummary && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 space-y-2"
+            >
+              {Array.from({ length: 5 }, (_, i) => {
+                const now = new Date()
+                const weekStart = startOfWeek(now, { weekStartsOn: 1 })
+                const date = new Date(weekStart)
+                date.setDate(date.getDate() + i)
+                const dateStr = format(date, 'yyyy-MM-dd')
+                const dayRecords = records.filter((r) => {
+                  try {
+                    const d = typeof r.date === 'string' ? parseISO(r.date) : new Date(r.date)
+                    return format(d, 'yyyy-MM-dd') === dateStr
+                  } catch { return false }
+                })
+                const hadir = dayRecords.filter((r) => r.status === 'hadir').length
+                const terlambat = dayRecords.filter((r) => r.status === 'terlambat').length
+                const tidak = dayRecords.filter((r) => r.status === 'tidak').length
+                const total = hadir + terlambat + tidak
+                return (
+                  <div key={dateStr} className="interactive-card p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-[var(--glass-text)]">{format(date, 'EEEE, dd MMM', { locale: localeId })}</span>
+                      <span className="text-xs text-[var(--glass-text-muted)]">{total} siswa</span>
+                    </div>
+                    <div className="flex gap-4 text-xs">
+                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="w-3 h-3" /> {hadir} hadir
+                      </span>
+                      <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                        <Clock className="w-3 h-3" /> {terlambat} terlambat
+                      </span>
+                      <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
+                        <XCircle className="w-3 h-3" /> {tidak} tidak
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </motion.div>
+          )}
+        </div>
+      )}
+
+      {/* Date Range History */}
+      {isGuru && selectedClassId && (
+        <div className="glass-card p-5">
+          <h3 className="font-semibold text-[var(--glass-text)] mb-4 flex items-center gap-2">
+            <Filter className="w-5 h-5 text-blue-500" /> Riwayat Rentang Tanggal
+          </h3>
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[var(--glass-text-muted)]">Dari:</span>
+              <input
+                type="date"
+                value={dateRangeStart}
+                onChange={(e) => setDateRangeStart(e.target.value)}
+                className="glass-input text-sm py-1.5"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[var(--glass-text-muted)]">Sampai:</span>
+              <input
+                type="date"
+                value={dateRangeEnd}
+                onChange={(e) => setDateRangeEnd(e.target.value)}
+                className="glass-input text-sm py-1.5"
+              />
+            </div>
+          </div>
+          {(() => {
+            const rangeRecords = records.filter((r) => {
+              try {
+                const d = typeof r.date === 'string' ? parseISO(r.date) : new Date(r.date)
+                const dateStr = format(d, 'yyyy-MM-dd')
+                return dateStr >= dateRangeStart && dateStr <= dateRangeEnd
+              } catch { return false }
+            })
+            const rHadir = rangeRecords.filter((r) => r.status === 'hadir').length
+            const rTerlambat = rangeRecords.filter((r) => r.status === 'terlambat').length
+            const rTidak = rangeRecords.filter((r) => r.status === 'tidak').length
+            const rTotal = rangeRecords.length
+            if (rTotal === 0) return <p className="text-xs text-[var(--glass-text-muted)] mt-3">Tidak ada data dalam rentang ini</p>
+            return (
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="text-center p-2 rounded-lg bg-emerald-500/5">
+                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{rHadir}</p>
+                  <p className="text-[10px] text-[var(--glass-text-muted)]">Hadir</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-amber-500/5">
+                  <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{rTerlambat}</p>
+                  <p className="text-[10px] text-[var(--glass-text-muted)]">Terlambat</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-red-500/5">
+                  <p className="text-lg font-bold text-red-600 dark:text-red-400">{rTidak}</p>
+                  <p className="text-[10px] text-[var(--glass-text-muted)]">Tidak Hadir</p>
+                </div>
+                <div className="text-center p-2 rounded-lg bg-purple-500/5">
+                  <p className="text-lg font-bold text-purple-600 dark:text-purple-400">{rTotal > 0 ? Math.round((rHadir / rTotal) * 100) : 0}%</p>
+                  <p className="text-[10px] text-[var(--glass-text-muted)]">Tingkat Kehadiran</p>
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+      )}
+
       {/* Attendance List */}
       <div className="glass-card p-5 space-y-3">
-        <h2 className="font-semibold text-[var(--glass-text)] mb-4">
-          Daftar Siswa {selectedClassId ? `- ${teacherClasses.find(c => c.id === selectedClassId)?.name || ''}` : ''}
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-[var(--glass-text)]">
+            Daftar Siswa {selectedClassId ? `- ${teacherClasses.find(c => c.id === selectedClassId)?.name || ''}` : ''}
+          </h2>
+          {/* Bulk Actions */}
+          {selectedClassId && students.length > 0 && (
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const newForm: Record<string, string> = {}
+                  students.forEach((s) => { newForm[s.id] = 'hadir' })
+                  setAttendanceForm(newForm)
+                  toast.success('Semua siswa ditandai hadir')
+                }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" /> Hadir Semua
+              </button>
+              <button
+                onClick={() => {
+                  const newForm: Record<string, string> = {}
+                  students.forEach((s) => { newForm[s.id] = 'tidak' })
+                  setAttendanceForm(newForm)
+                  toast.info('Semua siswa ditandai tidak hadir')
+                }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors"
+              >
+                <XCircle className="w-3.5 h-3.5" /> Tidak Hadir Semua
+              </button>
+            </div>
+          )}
+        </div>
         {selectedClassId && students.length > 0 ? (
           <>
             <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">

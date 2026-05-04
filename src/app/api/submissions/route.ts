@@ -140,11 +140,12 @@ export async function PUT(request: NextRequest) {
       const assignment = existingSubmission
         ? await db.assignment.findUnique({ where: { id: existingSubmission.assignmentId } })
         : null
-      if (grade < 0 || (assignment && grade > assignment.points)) {
+      if (!Number.isFinite(grade) || grade < 0 || (assignment && grade > assignment.points)) {
         return NextResponse.json({ error: `Nilai harus antara 0 dan ${assignment?.points || 100}` }, { status: 400 })
       }
-      if (!Number.isFinite(grade)) {
-        return NextResponse.json({ error: 'Nilai harus berupa angka yang valid' }, { status: 400 })
+      // Extra safety: reject unreasonably large grades
+      if (Math.abs(grade) > 1e6) {
+        return NextResponse.json({ error: 'Nilai tidak valid' }, { status: 400 })
       }
     }
 

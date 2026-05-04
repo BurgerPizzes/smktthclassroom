@@ -6,7 +6,7 @@ import {
   Menu, X, Sun, Moon, Bell, User, LogOut,
   LayoutDashboard, BookOpen, FileText, Calendar, MessageSquare,
   ClipboardCheck, Settings, Users, FolderOpen,
-  GraduationCap, Lock, ChevronDown
+  GraduationCap, Lock, ChevronDown, TrendingUp
 } from 'lucide-react'
 import { useAppStore, type PageName } from '@/lib/store'
 import { useTheme } from 'next-themes'
@@ -28,11 +28,13 @@ import ChangePasswordPage from '@/components/pages/ChangePasswordPage'
 import AdminSettingsPage from '@/components/pages/AdminSettingsPage'
 import UserManagementPage from '@/components/pages/UserManagementPage'
 import LearningResourcesPage from '@/components/pages/LearningResourcesPage'
+import ProgressAnalyticsPage from '@/components/pages/ProgressAnalyticsPage'
 
-const NAV_ITEMS: { page: PageName; label: string; icon: React.ElementType; roles?: string[] }[] = [
+const NAV_ITEMS: { page: PageName; label: string; icon: React.ElementType; roles?: string[]; roleLabels?: Record<string, string> }[] = [
   { page: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { page: 'classes', label: 'Kelas', icon: BookOpen },
   { page: 'my-submissions', label: 'Submissions', icon: FileText },
+  { page: 'progress-analytics', label: 'Progres Belajar', icon: TrendingUp, roleLabels: { guru: 'Analitik', admin: 'Analitik', siswa: 'Progres Belajar' } },
   { page: 'calendar', label: 'Kalender', icon: Calendar },
   { page: 'discussions', label: 'Diskusi', icon: MessageSquare },
   { page: 'attendance', label: 'Absensi', icon: ClipboardCheck },
@@ -85,6 +87,7 @@ function PageRenderer() {
     'admin-settings': AdminSettingsPage,
     'user-management': UserManagementPage,
     'learning-resources': LearningResourcesPage,
+    'progress-analytics': ProgressAnalyticsPage,
   }
 
   const Page = pages[currentPage] || DashboardPage
@@ -244,7 +247,7 @@ function AppLayoutInner() {
                         />
                       )}
                       <item.icon className={`w-4 h-4 ${isActive ? 'text-[#667eea]' : ''}`} />
-                      {item.label}
+                      {(item.roleLabels && user ? item.roleLabels[user.role] || item.label : item.label)}
                     </button>
                   )
                 })}
@@ -273,8 +276,8 @@ function AppLayoutInner() {
           {[
             { page: 'dashboard' as PageName, label: 'Dashboard', icon: LayoutDashboard },
             { page: 'classes' as PageName, label: 'Kelas', icon: BookOpen },
+            { page: 'progress-analytics' as PageName, label: 'Progres', icon: TrendingUp },
             { page: 'attendance' as PageName, label: 'Absensi', icon: ClipboardCheck },
-            { page: 'learning-resources' as PageName, label: 'Sumber', icon: FolderOpen },
             { page: 'profile' as PageName, label: 'Profil', icon: User },
           ].map((item) => {
             const isActive = currentPage === item.page

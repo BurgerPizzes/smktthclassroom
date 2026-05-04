@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { GraduationCap, Mail, Lock, Eye, EyeOff, ChevronDown, ChevronUp, LogIn, KeyRound, BookOpen, Users, Shield, Sparkles } from 'lucide-react'
+import { GraduationCap, Mail, Lock, Eye, EyeOff, ChevronDown, ChevronUp, LogIn, KeyRound, BookOpen, Users, Shield, Sparkles, Globe, MonitorSmartphone } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'
 
@@ -19,6 +19,27 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showDemo, setShowDemo] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+
+  // Typing animation for "Selamat Datang"
+  const [typedText, setTypedText] = useState('')
+  const fullText = 'Selamat Datang'
+  const typingStarted = useRef(false)
+
+  useEffect(() => {
+    if (typingStarted.current) return
+    typingStarted.current = true
+    let i = 0
+    const timer = setInterval(() => {
+      if (i < fullText.length) {
+        setTypedText(fullText.slice(0, i + 1))
+        i++
+      } else {
+        clearInterval(timer)
+      }
+    }, 80)
+    return () => clearInterval(timer)
+  }, [])
 
   const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -87,7 +108,7 @@ export default function LoginPage() {
             >
               <GraduationCap className="w-9 h-9 text-white" />
             </motion.div>
-            <h2 className="text-3xl font-bold mb-3">Selamat Datang di</h2>
+            <h2 className="text-3xl font-bold mb-3">{typedText}<span className="typing-cursor" /> di</h2>
             <h1 className="text-4xl font-extrabold tracking-tight mb-4">SMKTTH<br />Classroom</h1>
             <p className="text-white/70 text-sm leading-relaxed max-w-sm">
               Platform pembelajaran digital terpadu untuk mengelola kelas, tugas, dan kolaborasi antara guru dan siswa.
@@ -141,6 +162,7 @@ export default function LoginPage() {
               <p className="text-white/40 text-sm flex items-center justify-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" />
                 Sistem Manajemen Pembelajaran Digital
+                <span className="version-badge">v10.0</span>
               </p>
             </div>
 
@@ -176,8 +198,17 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              {/* Forgot Password */}
-              <div className="flex justify-end">
+              {/* Remember Me & Forgot Password */}
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="custom-checkbox"
+                  />
+                  <span className="text-xs text-white/40 hover:text-white/60 transition-colors">Ingat saya</span>
+                </label>
                 <button
                   type="button"
                   className="text-xs text-white/40 hover:text-white/60 transition-colors flex items-center gap-1"
@@ -205,6 +236,33 @@ export default function LoginPage() {
                 )}
               </motion.button>
             </form>
+
+            {/* Social Login Buttons */}
+            <div className="space-y-2">
+              <div className="relative flex items-center gap-3">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-[10px] text-white/30">atau masuk dengan</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => toast.info('Fitur segera hadir')}
+                  className="social-login-btn"
+                >
+                  <Globe className="w-4 h-4" />
+                  Google
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toast.info('Fitur segera hadir')}
+                  className="social-login-btn"
+                >
+                  <MonitorSmartphone className="w-4 h-4" />
+                  Microsoft
+                </button>
+              </div>
+            </div>
 
             {/* Register link */}
             <p className="text-center text-sm text-white/40">
@@ -239,11 +297,10 @@ export default function LoginPage() {
                         <motion.button
                           key={account.role}
                           onClick={() => fillDemo(account)}
-                          className="group relative rounded-xl p-3 text-center transition-all overflow-hidden border border-white/10 hover:border-white/20"
+                          className="gradient-border-animate group relative rounded-xl p-3 text-center transition-all overflow-hidden bg-white/5"
                           whileHover={{ scale: 1.03 }}
                           whileTap={{ scale: 0.97 }}
                         >
-                          <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ backgroundImage: `linear-gradient(135deg, var(--tw-gradient-stops))` }} />
                           <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${account.color} flex items-center justify-center mx-auto mb-2 shadow-lg`}>
                             <account.icon className="w-4 h-4 text-white" />
                           </div>

@@ -149,26 +149,35 @@ export default function DiscussionsPage() {
     })
   }, [])
 
-  const handleCreateThread = useCallback(() => {
+  const handleCreateThread = useCallback(async () => {
     if (!newThread.title.trim() || !newThread.content.trim()) {
       toast.error('Judul dan konten wajib diisi')
       return
     }
-    // Create a local thread (since we're using announcements API, we create as an announcement)
-    const fakeThread: Announcement = {
-      id: `thread-${Date.now()}`,
-      title: newThread.title,
-      content: newThread.content,
-      priority: newThread.category === 'pengumuman' ? 'high' : 'normal',
-      createdAt: new Date().toISOString(),
-      class: { id: 'general', name: 'Umum' },
-      creator: { name: user?.name || 'Pengguna' },
-      comments: [],
+    try {
+      const res = await fetch('/api/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newThread.title,
+          content: newThread.content,
+          priority: newThread.category === 'pengumuman' ? 'high' : 'normal',
+          isDiscussion: true,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        toast.error(data.error || 'Gagal membuat diskusi')
+        return
+      }
+      const created = await res.json()
+      setAnnouncements((prev) => [created, ...prev])
+      setShowNewThread(false)
+      setNewThread({ title: '', content: '', category: 'diskusi_umum' })
+      toast.success('Diskusi berhasil dibuat!')
+    } catch {
+      toast.error('Terjadi kesalahan')
     }
-    setAnnouncements((prev) => [fakeThread, ...prev])
-    setShowNewThread(false)
-    setNewThread({ title: '', content: '', category: 'diskusi_umum' })
-    toast.success('Diskusi berhasil dibuat!')
   }, [newThread, user])
 
   const filtered = announcements.filter((a) => {

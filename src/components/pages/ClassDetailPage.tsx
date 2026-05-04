@@ -6,7 +6,7 @@ import {
   BookOpen, FileText, Users, Bell, Plus, ArrowLeft,
   Megaphone, Clock, Send, MessageSquare, X, Search,
   Pin, Heart, Trash2, AlertTriangle, Zap, Calendar,
-  UserMinus, Shield, GraduationCap
+  UserMinus, Shield, GraduationCap, Share2, ThumbsUp, PartyPopper
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format, formatDistanceToNow } from 'date-fns'
@@ -79,6 +79,33 @@ export default function ClassDetailPage() {
   const [memberSearch, setMemberSearch] = useState('')
   const [likedAnnouncements, setLikedAnnouncements] = useState<Set<string>>(new Set())
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null)
+  const [pinnedAnnouncements, setPinnedAnnouncements] = useState<Set<string>>(new Set())
+  const [reactions, setReactions] = useState<Record<string, Record<string, number | boolean>>>({})
+
+  const togglePin = useCallback((annId: string) => {
+    setPinnedAnnouncements((prev) => {
+      const next = new Set(prev)
+      if (next.has(annId)) next.delete(annId)
+      else next.add(annId)
+      return next
+    })
+  }, [])
+
+  const toggleReaction = useCallback((annId: string, emoji: string) => {
+    setReactions((prev) => {
+      const annReactions = prev[annId] || { '👍': 0, '❤️': 0, '🎉': 0 }
+      const activeKey = `_active_${emoji}`
+      const isActive = Boolean(prev[annId]?.[activeKey])
+      return {
+        ...prev,
+        [annId]: {
+          ...annReactions,
+          [emoji]: ((annReactions[emoji] as number) || 0) + (isActive ? -1 : 1),
+          [activeKey]: !isActive,
+        },
+      }
+    })
+  }, [])
 
   useEffect(() => {
     if (!classId) return
@@ -268,6 +295,8 @@ export default function ClassDetailPage() {
 
                   {announcements.map((ann: any, index: number) => {
                     const isImportant = ann.priority === 'high'
+                    const isPinned = pinnedAnnouncements.has(ann.id)
+                    const annReactions = (reactions[ann.id] || { '👍': 0, '❤️': 0, '🎉': 0 }) as Record<string, number | boolean>
                     return (
                       <motion.div
                         key={ann.id}
@@ -276,8 +305,12 @@ export default function ClassDetailPage() {
                         transition={{ delay: index * 0.05 }}
                         className="relative mb-4"
                       >
-                        {/* Timeline dot */}
-                        <div className={`timeline-dot absolute -left-10 top-4 ${isImportant ? 'timeline-dot-important' : ''}`} />
+                        {/* Timeline dot with avatar */}
+                        <div className="absolute -left-10 top-4 z-[2]">
+                          <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${getAvatarColor(ann.creator?.name || 'U')} flex items-center justify-center text-white text-[10px] font-bold border-2 border-[var(--glass-bg)] shadow-md`}>
+                            {ann.creator?.name?.charAt(0) || 'U'}
+                          </div>
+                        </div>
 
                         <div className="glass-card p-5">
                           <div className="flex items-start gap-3">
@@ -287,9 +320,9 @@ export default function ClassDetailPage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-sm font-medium text-[var(--glass-text)]">{ann.creator?.name}</span>
-                                {isImportant && (
+                                {(isImportant || isPinned) && (
                                   <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-[var(--badge-red-bg)] text-[var(--badge-red-text)] font-medium">
-                                    <Pin className="w-3 h-3" /> Penting
+                                    <Pin className={`w-3 h-3 ${isPinned ? 'fill-current' : ''}`} /> {isPinned ? 'Dipin' : 'Penting'}
                                   </span>
                                 )}
                                 <span className="text-xs text-[var(--glass-text-muted)]">
@@ -301,18 +334,25 @@ export default function ClassDetailPage() {
                               <p className="text-xs text-[var(--glass-text-muted)] mt-3">
                                 {format(new Date(ann.createdAt), "dd MMM yyyy, HH:mm", { locale: localeId })}
                               </p>
-                              {/* Like/React buttons */}
-                              <div className="flex items-center gap-3 mt-3">
+                              {/* Emoji reactions */}
+                              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                                {['👍', '❤️', '🎉'].map((emoji) => (
+                                  <button
+                                    key={emoji}
+                                    onClick={() => toggleReaction(ann.id, emoji)}
+                                    className={`reaction-emoji ${annReactions[`_active_${emoji}`] ? 'active' : ''}`}
+                                  >
+                                    <span className="emoji-pop">{emoji}</span>
+                                    <span className="text-[10px] font-medium">{(annReactions[emoji] as number) || 0}</span>
+                                  </button>
+                                ))}
+                                {/* Pin toggle button */}
                                 <button
-                                  onClick={() => toggleLike(ann.id)}
-                                  className={`reaction-btn ${likedAnnouncements.has(ann.id) ? 'active' : ''}`}
+                                  onClick={() => togglePin(ann.id)}
+                                  className={`reaction-emoji ${isPinned ? 'active' : ''}`}
+                                  title={isPinned ? 'Lepas pin' : 'Pin pengumuman'}
                                 >
-                                  <Heart className={`w-3.5 h-3.5 ${likedAnnouncements.has(ann.id) ? 'fill-current' : ''}`} />
-                                  {likedAnnouncements.has(ann.id) ? 1 : 0}
-                                </button>
-                                <button className="reaction-btn">
-                                  <MessageSquare className="w-3.5 h-3.5" />
-                                  0
+                                  <Pin className={`w-3.5 h-3.5 ${isPinned ? 'fill-current' : ''}`} />
                                 </button>
                               </div>
                             </div>
@@ -390,6 +430,17 @@ export default function ClassDetailPage() {
                             <span className={`text-[10px] font-medium ${countdown.color} ${countdown.urgent ? 'countdown-urgent' : ''}`}>
                               {countdown.text}
                             </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigator.clipboard?.writeText(`${window.location.origin}?page=class-detail&id=${classId}&assignment=${assignment.id}`)
+                                toast.success('Link tugas disalin!')
+                              }}
+                              className="text-[var(--glass-text-muted)] hover:text-[var(--glass-text-secondary)] transition-colors p-1"
+                              title="Bagikan ke kelas"
+                            >
+                              <Share2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -456,8 +507,10 @@ export default function ClassDetailPage() {
                     {filteredGuru.map((m) => (
                       <div key={m.id} className={`member-card member-card-guru`}>
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getAvatarColor(m.user.name)} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
-                            {m.user.name.charAt(0)}
+                          <div className="avatar-gradient-ring">
+                            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getAvatarColor(m.user.name)} flex items-center justify-center text-white font-bold text-sm`}>
+                              {m.user.name.charAt(0)}
+                            </div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-[var(--glass-text)] font-medium truncate">{m.user.name}</p>
@@ -514,8 +567,10 @@ export default function ClassDetailPage() {
                     {filteredSiswa.map((m) => (
                       <div key={m.id} className={`member-card member-card-siswa`}>
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getAvatarColor(m.user.name)} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
-                            {m.user.name.charAt(0)}
+                          <div className="avatar-gradient-ring">
+                            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getAvatarColor(m.user.name)} flex items-center justify-center text-white font-bold text-sm`}>
+                              {m.user.name.charAt(0)}
+                            </div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-[var(--glass-text)] font-medium truncate">{m.user.name}</p>
