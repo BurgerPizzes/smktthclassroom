@@ -307,18 +307,22 @@ export default function AttendancePage() {
                     </div>
                     <div className="flex gap-1">
                       {(['hadir', 'terlambat', 'tidak'] as const).map((status) => {
-                        const config = STATUS_CONFIG[status]
+                        const isActive = currentStatus === status
+                        const activeStyles: Record<string, string> = {
+                          hadir: 'bg-emerald-500 text-white border-emerald-500',
+                          terlambat: 'bg-amber-500 text-white border-amber-500',
+                          tidak: 'bg-red-500 text-white border-red-500',
+                        }
+                        const inactiveStyles = 'bg-transparent text-[var(--glass-text-muted)] border-[var(--glass-border)] hover:bg-[var(--icon-btn-hover-bg)]'
                         return (
                           <button
                             key={status}
                             onClick={() => setAttendanceForm({ ...attendanceForm, [s.id]: status })}
-                            className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
-                              currentStatus === status
-                                ? config.color
-                                : 'bg-[var(--chip-bg)] text-[var(--glass-text-muted)] hover:bg-[var(--icon-btn-hover-bg)]'
+                            className={`px-2 py-1 rounded-lg text-xs font-medium transition-all border ${
+                              isActive ? activeStyles[status] : inactiveStyles
                             }`}
                           >
-                            {config.label}
+                            {STATUS_CONFIG[status].label}
                           </button>
                         )
                       })}

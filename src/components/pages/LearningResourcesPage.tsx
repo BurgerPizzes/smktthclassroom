@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, Upload, Search, Download, File, FileImage,
-  FileVideo, FileAudio, FileCode, FilePlus, X, Eye, ExternalLink
+  FileVideo, FileAudio, FileCode, FilePlus, X, Eye, ExternalLink, AlertCircle
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'
@@ -90,6 +90,7 @@ export default function LearningResourcesPage() {
   const [uploadingFile, setUploadingFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [previewResource, setPreviewResource] = useState<Resource | null>(null)
+  const [previewError, setPreviewError] = useState(false)
   const [userClasses, setUserClasses] = useState<ClassInfo[]>([])
 
   const isGuru = user?.role === 'guru' || user?.role === 'admin'
@@ -209,6 +210,7 @@ export default function LearningResourcesPage() {
 
   const handlePreview = useCallback((resource: Resource) => {
     setPreviewResource(resource)
+    setPreviewError(false)
   }, [])
 
   const types = [...new Set(resources.map((r) => r.fileType))]
@@ -398,11 +400,25 @@ export default function LearningResourcesPage() {
                 </div>
                 {/* Preview Content */}
                 <div className="flex-1 overflow-auto p-4 min-h-[400px]">
-                  {previewResource.fileType.toLowerCase() === 'pdf' ? (
+                  {previewError ? (
+                    <div className="flex flex-col items-center justify-center min-h-[300px] text-center">
+                      <AlertCircle className="w-16 h-16 text-amber-500 mb-4" />
+                      <p className="text-[var(--glass-text-secondary)] text-sm mb-4">
+                        File tidak ditemukan. File mungkin telah dihapus atau dipindahkan.
+                      </p>
+                      <button
+                        onClick={() => handleDownload(previewResource)}
+                        className="btn-gradient flex items-center gap-2 text-sm"
+                      >
+                        <Download className="w-4 h-4" /> Coba Unduh
+                      </button>
+                    </div>
+                  ) : previewResource.fileType.toLowerCase() === 'pdf' ? (
                     <iframe
                       src={previewResource.fileUrl}
                       className="w-full h-[70vh] rounded-lg border border-[var(--glass-border)]"
                       title={previewResource.title}
+                      onError={() => setPreviewError(true)}
                     />
                   ) : ['jpg', 'jpeg', 'png', 'gif'].includes(previewResource.fileType.toLowerCase()) ? (
                     <div className="flex items-center justify-center min-h-[400px]">
@@ -410,6 +426,7 @@ export default function LearningResourcesPage() {
                         src={previewResource.fileUrl}
                         alt={previewResource.title}
                         className="max-w-full max-h-[70vh] rounded-lg object-contain"
+                        onError={() => setPreviewError(true)}
                       />
                     </div>
                   ) : ['mp4', 'avi'].includes(previewResource.fileType.toLowerCase()) ? (
@@ -417,12 +434,13 @@ export default function LearningResourcesPage() {
                       src={previewResource.fileUrl}
                       controls
                       className="w-full max-h-[70vh] rounded-lg"
+                      onError={() => setPreviewError(true)}
                     >
                       Browser Anda tidak mendukung pemutaran video.
                     </video>
                   ) : ['mp3', 'wav'].includes(previewResource.fileType.toLowerCase()) ? (
                     <div className="flex items-center justify-center min-h-[200px]">
-                      <audio src={previewResource.fileUrl} controls className="w-full max-w-md" />
+                      <audio src={previewResource.fileUrl} controls className="w-full max-w-md" onError={() => setPreviewError(true)} />
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center min-h-[300px] text-center">

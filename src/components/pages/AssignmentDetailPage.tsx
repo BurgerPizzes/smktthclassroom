@@ -236,12 +236,16 @@ export default function AssignmentDetailPage() {
                     </span>
                   </div>
                   {mySubmission.content && <p className="text-sm text-[var(--glass-text-secondary)] mb-2">{mySubmission.content}</p>}
-                  {mySubmission.fileUrl && <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1"><Download className="w-3 h-3" /> {mySubmission.fileUrl}</p>}
+                  {mySubmission.fileUrl && (
+                    <a href={mySubmission.fileUrl} download className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline">
+                      <Download className="w-3 h-3" /> {mySubmission.fileUrl.split('/').pop()}
+                    </a>
+                  )}
                   {mySubmission.status === 'graded' && (
                     <div className="mt-3 p-3 rounded-lg bg-[var(--badge-green-bg)] border border-emerald-500/20">
                       <div className="flex items-center gap-2">
                         <Star className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{mySubmission.grade}/{assignment?.points}</span>
+                        <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{Number.isFinite(mySubmission.grade) ? Math.round(mySubmission.grade) : 0}/{assignment?.points}</span>
                       </div>
                       {mySubmission.feedback && <p className="text-sm text-[var(--glass-text-secondary)] mt-1">{mySubmission.feedback}</p>}
                     </div>
@@ -307,7 +311,11 @@ export default function AssignmentDetailPage() {
                         </span>
                       </div>
                       {sub.content && <p className="text-xs text-[var(--glass-text-secondary)]">{sub.content}</p>}
-                      {sub.fileUrl && <p className="text-xs text-blue-600 dark:text-blue-400">📎 {sub.fileUrl}</p>}
+                      {sub.fileUrl && (
+                      <a href={sub.fileUrl} download className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline">
+                        <Download className="w-3 h-3" /> {sub.fileUrl.split('/').pop()}
+                      </a>
+                    )}
 
                       {sub.status !== 'graded' && (
                         <div className="flex items-center gap-2 pt-2">
@@ -335,7 +343,7 @@ export default function AssignmentDetailPage() {
                       {sub.status === 'graded' && (
                         <div className="flex items-center gap-2 text-sm">
                           <Star className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">{sub.grade}/{assignment?.points}</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">{Number.isFinite(sub.grade) ? Math.round(sub.grade) : 0}/{assignment?.points}</span>
                           {sub.feedback && <span className="text-[var(--glass-text-muted)] text-xs">— {sub.feedback}</span>}
                         </div>
                       )}

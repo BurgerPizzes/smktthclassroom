@@ -4,10 +4,21 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen, Plus, Search, Users, Hash, GraduationCap,
-  Palette, Calculator, FlaskConical, Globe, BookMarked, Code
+  Palette, Calculator, FlaskConical, Globe, BookMarked, Code,
+  Zap, ArrowRight, Music, Dumbbell, Monitor, Microscope
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'
+
+interface ClassUser {
+  user: {
+    id: string
+    name: string
+    email: string
+    avatar?: string | null
+  }
+  role: string
+}
 
 interface ClassItem {
   id: string
@@ -16,19 +27,37 @@ interface ClassItem {
   code: string
   subject?: { name: string; code?: string }
   creator: { name: string }
+  classUsers?: ClassUser[]
   _count?: { classUsers: number; assignments: number }
 }
 
 const SUBJECT_ICONS: Record<string, React.ElementType> = {
   matematika: Calculator,
-  fisika: FlaskConical,
+  fisika: Microscope,
   kimia: FlaskConical,
   biologi: GraduationCap,
   bahasa: BookMarked,
   inggris: Globe,
   komputer: Code,
   seni: Palette,
+  olahraga: Dumbbell,
+  musik: Music,
+  tik: Monitor,
   default: BookOpen,
+}
+
+const SUBJECT_COLORS: Record<string, { gradient: string; accent: string; iconBg: string; subjectClass: string }> = {
+  matematika: { gradient: 'from-blue-500/20 to-cyan-500/20', accent: 'border-l-blue-500', iconBg: 'bg-blue-500', subjectClass: 'subject-blue' },
+  fisika: { gradient: 'from-purple-500/20 to-indigo-500/20', accent: 'border-l-purple-500', iconBg: 'bg-purple-500', subjectClass: 'subject-purple' },
+  kimia: { gradient: 'from-green-500/20 to-emerald-500/20', accent: 'border-l-green-500', iconBg: 'bg-green-500', subjectClass: 'subject-green' },
+  biologi: { gradient: 'from-emerald-500/20 to-teal-500/20', accent: 'border-l-emerald-500', iconBg: 'bg-emerald-500', subjectClass: 'subject-emerald' },
+  bahasa: { gradient: 'from-amber-500/20 to-yellow-500/20', accent: 'border-l-amber-500', iconBg: 'bg-amber-500', subjectClass: 'subject-amber' },
+  inggris: { gradient: 'from-rose-500/20 to-pink-500/20', accent: 'border-l-rose-500', iconBg: 'bg-rose-500', subjectClass: 'subject-rose' },
+  komputer: { gradient: 'from-cyan-500/20 to-blue-500/20', accent: 'border-l-cyan-500', iconBg: 'bg-cyan-500', subjectClass: 'subject-cyan' },
+  seni: { gradient: 'from-pink-500/20 to-purple-500/20', accent: 'border-l-pink-500', iconBg: 'bg-pink-500', subjectClass: 'subject-pink' },
+  olahraga: { gradient: 'from-orange-500/20 to-red-500/20', accent: 'border-l-orange-500', iconBg: 'bg-orange-500', subjectClass: 'subject-orange' },
+  tik: { gradient: 'from-teal-500/20 to-cyan-500/20', accent: 'border-l-teal-500', iconBg: 'bg-teal-500', subjectClass: 'subject-teal' },
+  default: { gradient: 'from-gray-500/20 to-slate-500/20', accent: 'border-l-gray-500', iconBg: 'bg-gray-500', subjectClass: '' },
 }
 
 function getSubjectIcon(subjectName?: string) {
@@ -40,14 +69,40 @@ function getSubjectIcon(subjectName?: string) {
   return SUBJECT_ICONS.default
 }
 
-const GRADIENT_COLORS = [
-  'from-blue-500/20 to-cyan-500/20',
-  'from-purple-500/20 to-pink-500/20',
-  'from-amber-500/20 to-orange-500/20',
-  'from-emerald-500/20 to-green-500/20',
-  'from-rose-500/20 to-pink-500/20',
-  'from-cyan-500/20 to-teal-500/20',
+function getSubjectColor(subjectName?: string) {
+  if (!subjectName) return SUBJECT_COLORS.default
+  const lower = subjectName.toLowerCase()
+  for (const [key, color] of Object.entries(SUBJECT_COLORS)) {
+    if (key !== 'default' && lower.includes(key)) return color
+  }
+  return SUBJECT_COLORS.default
+}
+
+const FALLBACK_COLORS = [
+  { gradient: 'from-blue-500/20 to-cyan-500/20', accent: 'border-l-blue-500', iconBg: 'bg-blue-500' },
+  { gradient: 'from-purple-500/20 to-pink-500/20', accent: 'border-l-purple-500', iconBg: 'bg-purple-500' },
+  { gradient: 'from-amber-500/20 to-orange-500/20', accent: 'border-l-amber-500', iconBg: 'bg-amber-500' },
+  { gradient: 'from-emerald-500/20 to-green-500/20', accent: 'border-l-emerald-500', iconBg: 'bg-emerald-500' },
+  { gradient: 'from-rose-500/20 to-pink-500/20', accent: 'border-l-rose-500', iconBg: 'bg-rose-500' },
+  { gradient: 'from-cyan-500/20 to-teal-500/20', accent: 'border-l-cyan-500', iconBg: 'bg-cyan-500' },
 ]
+
+function getAvatarColor(name: string) {
+  const colors = [
+    'from-blue-500 to-cyan-500',
+    'from-purple-500 to-pink-500',
+    'from-amber-500 to-orange-500',
+    'from-emerald-500 to-green-500',
+    'from-rose-500 to-pink-500',
+    'from-cyan-500 to-teal-500',
+    'from-indigo-500 to-purple-500',
+  ]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return colors[Math.abs(hash) % colors.length]
+}
 
 export default function ClassesPage() {
   const { user, setPage } = useAppStore()
@@ -58,6 +113,7 @@ export default function ClassesPage() {
   const [showJoin, setShowJoin] = useState(false)
   const [joinCode, setJoinCode] = useState('')
   const [newClass, setNewClass] = useState({ name: '', description: '', subjectId: '' })
+  const [quickJoinCode, setQuickJoinCode] = useState('')
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -101,8 +157,9 @@ export default function ClassesPage() {
     }
   }, [newClass])
 
-  const handleJoin = useCallback(async () => {
-    if (!joinCode.trim()) {
+  const handleJoin = useCallback(async (code?: string) => {
+    const codeToUse = code || joinCode.trim()
+    if (!codeToUse) {
       toast.error('Masukkan kode kelas')
       return
     }
@@ -110,7 +167,7 @@ export default function ClassesPage() {
       const res = await fetch('/api/classes/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: joinCode }),
+        body: JSON.stringify({ code: codeToUse }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -120,11 +177,18 @@ export default function ClassesPage() {
       setClasses((prev) => [data, ...prev])
       setShowJoin(false)
       setJoinCode('')
+      setQuickJoinCode('')
       toast.success('Berhasil bergabung ke kelas!')
     } catch {
       toast.error('Terjadi kesalahan')
     }
   }, [joinCode])
+
+  const handleQuickJoin = useCallback(() => {
+    if (quickJoinCode.trim()) {
+      handleJoin(quickJoinCode.trim())
+    }
+  }, [quickJoinCode, handleJoin])
 
   const filtered = classes.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -168,6 +232,42 @@ export default function ClassesPage() {
         </div>
       </div>
 
+      {/* Quick Join Section */}
+      {user?.role === 'siswa' && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card-glow p-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20 shrink-0">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-[var(--glass-text)]">Gabung Kelas Cepat</p>
+              <p className="text-xs text-[var(--glass-text-muted)]">Tempel kode kelas dari guru kamu</p>
+            </div>
+            <div className="flex items-center gap-2 flex-1 max-w-xs">
+              <input
+                type="text"
+                placeholder="Kode kelas..."
+                value={quickJoinCode}
+                onChange={(e) => setQuickJoinCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleQuickJoin() }}
+                className="glass-input text-center tracking-widest font-mono text-sm py-2"
+              />
+              <button
+                onClick={handleQuickJoin}
+                disabled={!quickJoinCode.trim()}
+                className="btn-gradient text-sm px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                <ArrowRight className="w-4 h-4" /> Gabung
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Search & Filter */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--glass-text-muted)]" />
@@ -185,7 +285,17 @@ export default function ClassesPage() {
         <AnimatePresence>
           {filtered.map((cls, idx) => {
             const Icon = getSubjectIcon(cls.subject?.name)
-            const gradient = GRADIENT_COLORS[idx % GRADIENT_COLORS.length]
+            const subjectColor = getSubjectColor(cls.subject?.name)
+            const fallbackColor = FALLBACK_COLORS[idx % FALLBACK_COLORS.length]
+            const gradient = cls.subject ? subjectColor.gradient : fallbackColor.gradient
+            const accentBorder = cls.subject ? subjectColor.accent : fallbackColor.accent
+            const iconBg = cls.subject ? subjectColor.iconBg : fallbackColor.iconBg
+
+            // Get members for avatar display (max 5 shown)
+            const members = cls.classUsers || []
+            const displayMembers = members.slice(0, 5)
+            const extraCount = members.length > 5 ? members.length - 5 : 0
+
             return (
               <motion.div
                 key={cls.id}
@@ -193,29 +303,61 @@ export default function ClassesPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ delay: idx * 0.05 }}
-                className="class-card cursor-pointer"
+                className="class-card cursor-pointer border-l-4"
+                style={{ borderLeftColor: `var(--subject-color, ${iconBg.replace('bg-', '').replace(/-\d+$/, '')})` }}
                 onClick={() => setPage('class-detail', { id: cls.id })}
               >
-                <div className={`h-24 bg-gradient-to-br ${gradient} flex items-center justify-center relative`}>
-                  <Icon className="w-10 h-10 text-[var(--glass-text-muted)]" />
-                  <div className="absolute top-3 right-3 bg-[var(--chip-bg)] backdrop-blur-sm rounded-lg px-2 py-0.5 text-xs text-[var(--glass-text-secondary)]">
+                <div className={`h-24 bg-gradient-to-br ${gradient} flex items-center justify-center relative overflow-hidden`}>
+                  <div className="absolute inset-0 bg-[var(--glass-bg)] opacity-30" />
+                  <div className={`w-14 h-14 rounded-2xl ${iconBg} flex items-center justify-center shadow-lg relative z-10`}>
+                    <Icon className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="absolute top-3 right-3 bg-[var(--chip-bg)] backdrop-blur-sm rounded-lg px-2.5 py-1 text-xs text-[var(--glass-text-secondary)] font-mono font-medium z-10">
                     {cls.code}
                   </div>
+                  {cls.subject && (
+                    <div className="absolute bottom-3 left-3 text-xs text-[var(--glass-text-muted)] font-medium bg-[var(--chip-bg)] backdrop-blur-sm rounded-md px-2 py-0.5 z-10">
+                      {cls.subject.name}
+                    </div>
+                  )}
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-[var(--glass-text)] text-sm truncate">{cls.name}</h3>
-                  {cls.subject && (
-                    <p className="text-xs text-[var(--glass-text-secondary)] mt-0.5">{cls.subject.name}</p>
-                  )}
                   {cls.description && (
                     <p className="text-xs text-[var(--glass-text-muted)] mt-1 line-clamp-2">{cls.description}</p>
                   )}
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--glass-border)]">
+                    {/* Stacked avatars */}
+                    <div className="flex items-center gap-2">
+                      {displayMembers.length > 0 ? (
+                        <div className="avatar-stack">
+                          {displayMembers.map((cu, i) => (
+                            <div
+                              key={cu.user.id}
+                              className={`w-6 h-6 rounded-full bg-gradient-to-br ${getAvatarColor(cu.user.name)} flex items-center justify-center text-white text-[10px] font-bold ring-2 ring-[var(--glass-bg)]`}
+                              title={cu.user.name}
+                            >
+                              {cu.user.avatar ? (
+                                <img src={cu.user.avatar} alt={cu.user.name} className="w-full h-full rounded-full object-cover" />
+                              ) : (
+                                cu.user.name.charAt(0).toUpperCase()
+                              )}
+                            </div>
+                          ))}
+                          {extraCount > 0 && (
+                            <div className="w-6 h-6 rounded-full bg-[var(--chip-bg)] flex items-center justify-center text-[var(--glass-text-muted)] text-[10px] font-medium ring-2 ring-[var(--glass-bg)]">
+                              +{extraCount}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-[var(--glass-text-muted)] flex items-center gap-1">
+                          <Users className="w-3 h-3" /> {cls._count?.classUsers || 0} anggota
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs text-[var(--glass-text-muted)] flex items-center gap-1">
-                      <Users className="w-3 h-3" /> {cls._count?.classUsers || 0} anggota
-                    </span>
-                    <span className="text-xs text-[var(--glass-text-muted)]">
-                      {cls._count?.assignments || 0} tugas
+                      <BookOpen className="w-3 h-3" /> {cls._count?.assignments || 0} tugas
                     </span>
                   </div>
                 </div>
@@ -235,6 +377,18 @@ export default function ClassesPage() {
           <p className="text-[var(--glass-text-muted)] text-sm">
             {search ? 'Coba kata kunci lain' : 'Buat atau gabung ke kelas untuk memulai'}
           </p>
+          {!search && (
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setShowJoin(true)} className="btn-glass text-sm flex items-center gap-2">
+                <Hash className="w-4 h-4" /> Gabung Kelas
+              </button>
+              {(user?.role === 'guru' || user?.role === 'admin') && (
+                <button onClick={() => setShowCreate(true)} className="btn-gradient text-sm flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> Buat Kelas
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -309,7 +463,7 @@ export default function ClassesPage() {
                 />
                 <div className="flex gap-2 justify-end">
                   <button onClick={() => setShowJoin(false)} className="btn-glass text-sm">Batal</button>
-                  <button onClick={handleJoin} className="btn-gradient text-sm">Gabung</button>
+                  <button onClick={() => handleJoin()} className="btn-gradient text-sm">Gabung</button>
                 </div>
               </div>
             </motion.div>

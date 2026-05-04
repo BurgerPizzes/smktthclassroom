@@ -134,6 +134,20 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Submission ID wajib diisi' }, { status: 400 })
     }
 
+    // Validate grade is within valid range
+    if (grade !== undefined) {
+      const existingSubmission = await db.submission.findUnique({ where: { id }, select: { assignmentId: true } })
+      const assignment = existingSubmission
+        ? await db.assignment.findUnique({ where: { id: existingSubmission.assignmentId } })
+        : null
+      if (grade < 0 || (assignment && grade > assignment.points)) {
+        return NextResponse.json({ error: `Nilai harus antara 0 dan ${assignment?.points || 100}` }, { status: 400 })
+      }
+      if (!Number.isFinite(grade)) {
+        return NextResponse.json({ error: 'Nilai harus berupa angka yang valid' }, { status: 400 })
+      }
+    }
+
     const submission = await db.submission.update({
       where: { id },
       data: {

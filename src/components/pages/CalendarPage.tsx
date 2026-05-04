@@ -4,10 +4,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, ChevronRight, Calendar as CalendarIcon,
-  FileText, Clock, X
+  FileText, Clock, X, AlertTriangle, Timer, BookOpen, FlaskConical, Zap
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay, isToday } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay, isToday, differenceInDays } from 'date-fns'
 import { id as localeId } from 'date-fns/locale/id'
 
 interface Assignment {
@@ -20,13 +20,70 @@ interface Assignment {
   class: { name: string }
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  tugas: 'bg-blue-500',
-  ujian: 'bg-red-500',
-  kuis: 'bg-amber-500',
-  TUGAS: 'bg-blue-500',
-  UJIAN: 'bg-red-500',
-  KUIS: 'bg-amber-500',
+const TYPE_STYLES: Record<string, { bg: string; text: string; border: string; dot: string; icon: React.ElementType; badge: string }> = {
+  tugas: {
+    bg: 'bg-[var(--badge-blue-bg)]',
+    text: 'text-[var(--badge-blue-text)]',
+    border: 'border-blue-500/30',
+    dot: 'bg-blue-500',
+    icon: FileText,
+    badge: 'bg-blue-500 text-white',
+  },
+  ujian: {
+    bg: 'bg-[var(--badge-red-bg)]',
+    text: 'text-[var(--badge-red-text)]',
+    border: 'border-red-500/30',
+    dot: 'bg-red-500',
+    icon: AlertTriangle,
+    badge: 'bg-red-500 text-white',
+  },
+  kuis: {
+    bg: 'bg-[var(--badge-amber-bg)]',
+    text: 'text-[var(--badge-amber-text)]',
+    border: 'border-amber-500/30',
+    dot: 'bg-amber-500',
+    icon: Zap,
+    badge: 'bg-amber-500 text-white',
+  },
+  TUGAS: {
+    bg: 'bg-[var(--badge-blue-bg)]',
+    text: 'text-[var(--badge-blue-text)]',
+    border: 'border-blue-500/30',
+    dot: 'bg-blue-500',
+    icon: FileText,
+    badge: 'bg-blue-500 text-white',
+  },
+  UJIAN: {
+    bg: 'bg-[var(--badge-red-bg)]',
+    text: 'text-[var(--badge-red-text)]',
+    border: 'border-red-500/30',
+    dot: 'bg-red-500',
+    icon: AlertTriangle,
+    badge: 'bg-red-500 text-white',
+  },
+  KUIS: {
+    bg: 'bg-[var(--badge-amber-bg)]',
+    text: 'text-[var(--badge-amber-text)]',
+    border: 'border-amber-500/30',
+    dot: 'bg-amber-500',
+    icon: Zap,
+    badge: 'bg-amber-500 text-white',
+  },
+}
+
+const DEFAULT_STYLE = TYPE_STYLES.tugas
+
+function getCountdownInfo(dueDate: Date) {
+  const now = new Date()
+  const diffMs = dueDate.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 0) return { text: 'Terlambat', color: 'text-[var(--badge-red-text)]', bg: 'bg-[var(--badge-red-bg)]', urgent: true, overdue: true }
+  if (diffDays === 0) return { text: 'Hari ini!', color: 'text-[var(--badge-red-text)]', bg: 'bg-[var(--badge-red-bg)]', urgent: true, overdue: false }
+  if (diffDays === 1) return { text: 'Besok', color: 'text-[var(--badge-amber-text)]', bg: 'bg-[var(--badge-amber-bg)]', urgent: true, overdue: false }
+  if (diffDays <= 3) return { text: `${diffDays} hari lagi`, color: 'text-[var(--badge-amber-text)]', bg: 'bg-[var(--badge-amber-bg)]', urgent: true, overdue: false }
+  if (diffDays <= 7) return { text: `${diffDays} hari lagi`, color: 'text-[var(--badge-blue-text)]', bg: 'bg-[var(--badge-blue-bg)]', urgent: false, overdue: false }
+  return { text: format(dueDate, 'dd MMM', { locale: localeId }), color: 'text-[var(--glass-text-muted)]', bg: 'bg-[var(--chip-bg)]', urgent: false, overdue: false }
 }
 
 export default function CalendarPage() {
@@ -65,6 +122,15 @@ export default function CalendarPage() {
     const key = format(selectedDate, 'yyyy-MM-dd')
     return assignmentsByDate[key] || []
   }, [selectedDate, assignmentsByDate])
+
+  // Get upcoming assignments (next 7 days) for the sidebar list
+  const upcomingAssignments = useMemo(() => {
+    const now = new Date()
+    return assignments
+      .filter((a) => new Date(a.dueDate) >= now)
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 8)
+  }, [assignments])
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
@@ -112,112 +178,217 @@ export default function CalendarPage() {
       </div>
 
       {/* Legend */}
-      <div className="flex gap-4 text-xs text-[var(--glass-text-secondary)]">
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Tugas</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Ujian</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Kuis</span>
+      <div className="flex flex-wrap gap-3 text-xs text-[var(--glass-text-secondary)]">
+        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--badge-blue-bg)] text-[var(--badge-blue-text)] font-medium">
+          <FileText className="w-3 h-3" /> Tugas
+        </span>
+        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--badge-red-bg)] text-[var(--badge-red-text)] font-medium">
+          <AlertTriangle className="w-3 h-3" /> Ujian
+        </span>
+        <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--badge-amber-bg)] text-[var(--badge-amber-text)] font-medium">
+          <Zap className="w-3 h-3" /> Kuis
+        </span>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="glass-card p-4 md:p-6">
-        {/* Day headers */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {dayNames.map((d) => (
-            <div key={d} className="text-center text-xs font-medium text-[var(--glass-text-muted)] py-2">
-              {d}
-            </div>
-          ))}
-        </div>
-
-        {/* Days grid */}
-        <div className="grid grid-cols-7 gap-1">
-          {/* Empty cells for offset */}
-          {Array.from({ length: startDay }).map((_, i) => (
-            <div key={`empty-${i}`} className="aspect-square" />
-          ))}
-
-          {days.map((day) => {
-            const key = format(day, 'yyyy-MM-dd')
-            const dayAssignments = assignmentsByDate[key] || []
-            const isSelected = selectedDate && isSameDay(day, selectedDate)
-            const today = isToday(day)
-
-            return (
-              <motion.button
-                key={key}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedDate(day)}
-                className={`aspect-square rounded-lg p-1 flex flex-col items-center justify-center transition-all relative ${
-                  isSelected
-                    ? 'bg-gradient-to-br from-[#667eea] to-[#764ba2] shadow-lg shadow-purple-500/20'
-                    : today
-                    ? 'bg-[var(--glass-hover-bg)] border border-[var(--glass-border)]'
-                    : 'hover:bg-[var(--glass-hover-bg)]'
-                }`}
-              >
-                <span className={`text-xs font-medium ${
-                  isSelected ? 'text-white' : today ? 'text-[var(--glass-text)]' : 'text-[var(--glass-text-secondary)]'
-                }`}>
-                  {format(day, 'd')}
-                </span>
-                {dayAssignments.length > 0 && (
-                  <div className="flex gap-0.5 mt-0.5">
-                    {dayAssignments.slice(0, 3).map((a, i) => (
-                      <span
-                        key={i}
-                        className={`w-1.5 h-1.5 rounded-full ${TYPE_COLORS[a.type] || 'bg-blue-500'}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </motion.button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Selected Date Details */}
-      <AnimatePresence>
-        {selectedDate && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="glass-card p-5"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-[var(--glass-text)] text-sm">
-                {format(selectedDate, 'EEEE, dd MMMM yyyy', { locale: localeId })}
-              </h3>
-              <button onClick={() => setSelectedDate(null)} className="text-[var(--glass-text-muted)] hover:text-[var(--glass-text)]">
-                <X className="w-4 h-4" />
-              </button>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Calendar Grid - Takes 2 columns on large screens */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="glass-card p-4 md:p-6">
+            {/* Day headers */}
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {dayNames.map((d) => (
+                <div key={d} className="text-center text-xs font-medium text-[var(--glass-text-muted)] py-2">
+                  {d}
+                </div>
+              ))}
             </div>
 
-            {selectedDateAssignments.length > 0 ? (
-              <div className="space-y-2">
-                {selectedDateAssignments.map((a) => (
-                  <div
-                    key={a.id}
-                    className="interactive-card p-3 flex items-center gap-3"
-                    onClick={() => setPage('assignment-detail', { id: a.id })}
+            {/* Days grid */}
+            <div className="grid grid-cols-7 gap-1">
+              {/* Empty cells for offset */}
+              {Array.from({ length: startDay }).map((_, i) => (
+                <div key={`empty-${i}`} className="aspect-square" />
+              ))}
+
+              {days.map((day) => {
+                const key = format(day, 'yyyy-MM-dd')
+                const dayAssignments = assignmentsByDate[key] || []
+                const isSelected = selectedDate && isSameDay(day, selectedDate)
+                const today = isToday(day)
+
+                // Determine if any assignment is urgent
+                const hasUrgent = dayAssignments.some((a) => {
+                  const diff = differenceInDays(new Date(a.dueDate), new Date())
+                  return diff >= 0 && diff <= 2
+                })
+                const hasOverdue = dayAssignments.some((a) => differenceInDays(new Date(a.dueDate), new Date()) < 0)
+
+                return (
+                  <motion.button
+                    key={key}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedDate(day)}
+                    className={`aspect-square rounded-xl p-1 flex flex-col items-center justify-center transition-all relative ${
+                      isSelected
+                        ? 'bg-gradient-to-br from-[#667eea] to-[#764ba2] shadow-lg shadow-purple-500/20'
+                        : today
+                        ? 'bg-[var(--glass-hover-bg)] border border-[var(--glass-hover-border)] ring-1 ring-purple-500/20'
+                        : 'hover:bg-[var(--glass-hover-bg)]'
+                    }`}
                   >
-                    <div className={`w-1 h-8 rounded-full ${TYPE_COLORS[a.type] || 'bg-blue-500'}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-[var(--glass-text)] font-medium truncate">{a.title}</p>
-                      <p className="text-xs text-[var(--glass-text-muted)]">{a.class.name}</p>
-                    </div>
-                    <span className="text-xs text-[var(--glass-text-muted)]">{a.type.toUpperCase()}</span>
+                    <span className={`text-xs font-medium ${
+                      isSelected ? 'text-white' : today ? 'text-[var(--glass-text)]' : 'text-[var(--glass-text-secondary)]'
+                    }`}>
+                      {format(day, 'd')}
+                    </span>
+                    {dayAssignments.length > 0 && (
+                      <div className="flex gap-0.5 mt-0.5 flex-wrap justify-center">
+                        {dayAssignments.slice(0, 3).map((a, i) => {
+                          const style = TYPE_STYLES[a.type] || DEFAULT_STYLE
+                          return (
+                            <span
+                              key={i}
+                              className={`w-1.5 h-1.5 rounded-full ${style.dot} ${hasUrgent && !isSelected ? 'countdown-urgent' : ''}`}
+                            />
+                          )
+                        })}
+                      </div>
+                    )}
+                  </motion.button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Selected Date Details */}
+          <AnimatePresence>
+            {selectedDate && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="glass-card p-5"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-[var(--glass-text)] text-sm flex items-center gap-2">
+                    <CalendarIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    {format(selectedDate, 'EEEE, dd MMMM yyyy', { locale: localeId })}
+                  </h3>
+                  <button onClick={() => setSelectedDate(null)} className="text-[var(--glass-text-muted)] hover:text-[var(--glass-text)] transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {selectedDateAssignments.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedDateAssignments.map((a) => {
+                      const style = TYPE_STYLES[a.type] || DEFAULT_STYLE
+                      const TypeIcon = style.icon
+                      const countdown = getCountdownInfo(new Date(a.dueDate))
+
+                      return (
+                        <div
+                          key={a.id}
+                          className={`interactive-card p-3 flex items-center gap-3 border-l-3 ${style.border}`}
+                          onClick={() => setPage('assignment-detail', { id: a.id })}
+                        >
+                          <div className={`w-9 h-9 rounded-lg ${style.bg} flex items-center justify-center shrink-0`}>
+                            <TypeIcon className={`w-4 h-4 ${style.text}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-[var(--glass-text)] font-medium truncate">{a.title}</p>
+                            <p className="text-xs text-[var(--glass-text-muted)]">{a.class.name} • {a.points} poin</p>
+                          </div>
+                          <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${countdown.bg} ${countdown.color} ${countdown.urgent ? 'countdown-urgent' : ''}`}>
+                            {countdown.text}
+                          </span>
+                        </div>
+                      )
+                    })}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[var(--glass-text-muted)] text-sm text-center py-4">Tidak ada tugas pada tanggal ini</p>
+                ) : (
+                  <p className="text-[var(--glass-text-muted)] text-sm text-center py-4">Tidak ada tugas pada tanggal ini</p>
+                )}
+              </motion.div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </AnimatePresence>
+        </div>
+
+        {/* Sidebar - Upcoming Events */}
+        <div className="space-y-4">
+          <div className="glass-card p-5">
+            <h3 className="font-semibold text-[var(--glass-text)] text-sm flex items-center gap-2 mb-4">
+              <Timer className="w-4 h-4 text-amber-600 dark:text-amber-400" /> Mendatang
+            </h3>
+            <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+              {upcomingAssignments.length > 0 ? (
+                upcomingAssignments.map((a) => {
+                  const style = TYPE_STYLES[a.type] || DEFAULT_STYLE
+                  const TypeIcon = style.icon
+                  const countdown = getCountdownInfo(new Date(a.dueDate))
+
+                  return (
+                    <motion.div
+                      key={a.id}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className={`interactive-card p-3 border-l-3 ${style.border}`}
+                      onClick={() => setPage('assignment-detail', { id: a.id })}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className={`w-8 h-8 rounded-lg ${style.bg} flex items-center justify-center shrink-0 mt-0.5`}>
+                          <TypeIcon className={`w-3.5 h-3.5 ${style.text}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-[var(--glass-text)] font-medium truncate">{a.title}</p>
+                          <p className="text-xs text-[var(--glass-text-muted)]">{a.class.name}</p>
+                          <div className="flex items-center justify-between mt-1.5">
+                            <span className="text-xs text-[var(--glass-text-muted)] flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {format(new Date(a.dueDate), 'dd MMM', { locale: localeId })}
+                            </span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${countdown.bg} ${countdown.color} ${countdown.urgent ? 'countdown-urgent' : ''}`}>
+                              {countdown.text}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })
+              ) : (
+                <div className="empty-state py-8">
+                  <CalendarIcon className="w-10 h-10 mb-2" />
+                  <p className="text-sm">Tidak ada tugas mendatang</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Stats mini card */}
+          <div className="glass-card p-5">
+            <h3 className="font-semibold text-[var(--glass-text)] text-sm mb-3">Ringkasan Bulan Ini</h3>
+            <div className="space-y-2.5">
+              {[
+                { label: 'Tugas', count: assignments.filter(a => a.type.toLowerCase() === 'tugas').length, color: 'bg-blue-500', bg: 'bg-[var(--badge-blue-bg)]' },
+                { label: 'Ujian', count: assignments.filter(a => a.type.toLowerCase() === 'ujian').length, color: 'bg-red-500', bg: 'bg-[var(--badge-red-bg)]' },
+                { label: 'Kuis', count: assignments.filter(a => a.type.toLowerCase() === 'kuis').length, color: 'bg-amber-500', bg: 'bg-[var(--badge-amber-bg)]' },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
+                    <span className="text-xs text-[var(--glass-text-secondary)]">{item.label}</span>
+                  </div>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${item.bg} text-[var(--glass-text)]`}>
+                    {item.count}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
