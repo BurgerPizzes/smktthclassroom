@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, Clock, ArrowLeft, Upload, Send, MessageSquare,
-  CheckCircle2, XCircle, Star, AlertCircle, Download, Trash2
+  CheckCircle2, XCircle, Star, AlertCircle, Download, Trash2,
+  Loader2, File, Image, FileCheck2
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'
@@ -23,6 +24,10 @@ export default function AssignmentDetailPage() {
   const [content, setContent] = useState('')
   const [dragActive, setDragActive] = useState(false)
   const [fileName, setFileName] = useState('')
+  const [fileUrl, setFileUrl] = useState('')
+  const [fileType, setFileType] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [gradeInput, setGradeInput] = useState<Record<string, string>>({})
   const [feedbackInput, setFeedbackInput] = useState<Record<string, string>>({})
   const [commentText, setCommentText] = useState('')
@@ -66,8 +71,60 @@ export default function AssignmentDetailPage() {
     return { bg: 'from-blue-500/20 to-cyan-500/20', border: 'border-blue-500/30', text: 'text-blue-600 dark:text-blue-400', label: 'Tugas' }
   }
 
+  const uploadFile = useCallback(async (file: File) => {
+    setUploading(true)
+    setUploadProgress(0)
+    setFileName(file.name)
+    setFileType(file.type)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      // Simulate progress during upload
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return 90
+          }
+          return prev + Math.random() * 15
+        })
+      }, 200)
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      clearInterval(progressInterval)
+
+      if (!res.ok) {
+        const data = await res.json()
+        toast.error(data.error || 'Gagal mengunggah file')
+        setFileName('')
+        setFileUrl('')
+        setFileType('')
+        return
+      }
+
+      const data = await res.json()
+      setUploadProgress(100)
+      setFileUrl(data.url)
+      setFileName(data.filename || file.name)
+      toast.success(`File "${data.filename || file.name}" berhasil diunggah!`)
+    } catch {
+      toast.error('Terjadi kesalahan saat mengunggah file')
+      setFileName('')
+      setFileUrl('')
+      setFileType('')
+    } finally {
+      setUploading(false)
+    }
+  }, [])
+
   const handleSubmit = useCallback(async () => {
-    if (!content && !fileName) {
+    if (!content && !fileUrl) {
       toast.error('Mohon isi konten atau unggah file')
       return
     }
@@ -75,7 +132,7 @@ export default function AssignmentDetailPage() {
       const res = await fetch('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ assignmentId, content, fileUrl: fileName || undefined }),
+        body: JSON.stringify({ assignmentId, content, fileUrl: fileUrl || undefined }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -85,11 +142,13 @@ export default function AssignmentDetailPage() {
       setMySubmission(data)
       setContent('')
       setFileName('')
+      setFileUrl('')
+      setFileType('')
       toast.success('Tugas berhasil dikumpulkan!')
     } catch {
       toast.error('Terjadi kesalahan')
     }
-  }, [assignmentId, content, fileName])
+  }, [assignmentId, content, fileUrl])
 
   const handleGrade = useCallback(async (submissionId: string) => {
     const grade = parseFloat(gradeInput[submissionId] || '0')
@@ -139,18 +198,28 @@ export default function AssignmentDetailPage() {
     setDragActive(false)
     const file = e.dataTransfer.files[0]
     if (file) {
-      setFileName(file.name)
-      toast.info(`File "${file.name}" dipilih (simulasi)`)
+      uploadFile(file)
     }
-  }, [])
+  }, [uploadFile])
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setFileName(file.name)
-      toast.info(`File "${file.name}" dipilih (simulasi)`)
+      uploadFile(file)
     }
+    // Reset the input
+    e.target.value = ''
+  }, [uploadFile])
+
+  const handleRemoveFile = useCallback(() => {
+    setFileName('')
+    setFileUrl('')
+    setFileType('')
+    toast.info('File dihapus')
   }, [])
+
+  const isImageFile = (type: string) => type.startsWith('image/')
+  const isPdfFile = (type: string) => type === 'application/pdf'
 
   if (loading) {
     return (
@@ -255,15 +324,35 @@ export default function AssignmentDetailPage() {
                 <>
                   {/* Drop zone */}
                   <div
-                    className={`drop-zone p-8 text-center ${dragActive ? 'active' : ''}`}
+                    className={`drop-zone p-8 text-center ${dragActive ? 'active' : ''} ${uploading ? 'pointer-events-none opacity-70' : ''}`}
                     onDragOver={(e) => { e.preventDefault(); setDragActive(true) }}
                     onDragLeave={() => setDragActive(false)}
                     onDrop={handleDrop}
-                    onClick={() => document.getElementById('file-input')?.click()}
+                    onClick={() => !uploading && document.getElementById('file-input')?.click()}
                   >
-                    <Upload className="w-10 h-10 text-[var(--glass-text-muted)] mx-auto mb-3" />
-                    <p className="text-[var(--glass-text-secondary)] text-sm">Drag & drop file atau klik untuk memilih</p>
-                    {fileName && <p className="text-blue-600 dark:text-blue-400 text-sm mt-2">📎 {fileName}</p>}
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-10 h-10 text-[var(--badge-purple-text)] mx-auto mb-3 animate-spin" />
+                        <p className="text-[var(--glass-text-secondary)] text-sm mb-3">Mengunggah file...</p>
+                        <div className="max-w-xs mx-auto">
+                          <div className="progress-bar h-2">
+                            <motion.div
+                              className="progress-bar-fill h-2"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${uploadProgress}%` }}
+                              transition={{ duration: 0.3 }}
+                            />
+                          </div>
+                          <p className="text-xs text-[var(--glass-text-muted)] mt-1">{Math.round(uploadProgress)}%</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-10 h-10 text-[var(--glass-text-muted)] mx-auto mb-3" />
+                        <p className="text-[var(--glass-text-secondary)] text-sm">Drag & drop file atau klik untuk memilih</p>
+                        <p className="text-[var(--glass-text-muted)] text-xs mt-1">Maksimal 10MB</p>
+                      </>
+                    )}
                     <input
                       id="file-input"
                       type="file"
@@ -271,13 +360,65 @@ export default function AssignmentDetailPage() {
                       onChange={handleFileSelect}
                     />
                   </div>
+
+                  {/* File preview after upload */}
+                  {fileName && !uploading && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="glass-card p-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-[var(--badge-green-bg)] flex items-center justify-center shrink-0">
+                          <FileCheck2 className="w-5 h-5 text-[var(--badge-green-text)]" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[var(--glass-text)] truncate">{fileName}</p>
+                          <p className="text-xs text-[var(--badge-green-text)]">Berhasil diunggah</p>
+                        </div>
+                        <button
+                          onClick={handleRemoveFile}
+                          className="p-1.5 rounded-lg hover:bg-[var(--badge-red-bg)] text-[var(--glass-text-muted)] hover:text-[var(--badge-red-text)] transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Image preview */}
+                      {isImageFile(fileType) && fileUrl && (
+                        <div className="mt-3 rounded-lg overflow-hidden border border-[var(--glass-border)]">
+                          <img
+                            src={fileUrl}
+                            alt="Preview"
+                            className="max-h-48 w-auto mx-auto"
+                          />
+                        </div>
+                      )}
+
+                      {/* PDF preview */}
+                      {isPdfFile(fileType) && fileUrl && (
+                        <div className="mt-3 rounded-lg overflow-hidden border border-[var(--glass-border)]">
+                          <iframe
+                            src={fileUrl}
+                            className="w-full h-48"
+                            title="PDF Preview"
+                          />
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+
                   <textarea
                     placeholder="Tulis komentar atau catatan (opsional)..."
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     className="glass-input min-h-[80px] resize-none"
                   />
-                  <button onClick={handleSubmit} className="btn-gradient flex items-center gap-2 text-sm">
+                  <button
+                    onClick={handleSubmit}
+                    disabled={uploading || (!content && !fileUrl)}
+                    className="btn-gradient flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <Send className="w-4 h-4" /> Kumpulkan
                   </button>
                 </>

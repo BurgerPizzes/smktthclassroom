@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       include: {
         user: { select: { id: true, name: true, email: true } },
         assignment: {
-          select: { id: true, title: true, type: true, points: true, dueDate: true, class: { select: { name: true } } },
+          select: { id: true, title: true, type: true, points: true, dueDate: true, class: { select: { id: true, name: true } } },
         },
       },
       orderBy: { submittedAt: 'desc' },
