@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
-  UserCheck, UserX, Clock, Calendar, CheckCircle2, XCircle,
+  UserCheck, Clock, Calendar, CheckCircle2, XCircle,
   AlertCircle, Download, TrendingUp, BarChart3, Flame, Target,
   Users as UsersIcon, Filter
 } from 'lucide-react'

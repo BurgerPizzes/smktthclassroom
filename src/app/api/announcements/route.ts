@@ -4,11 +4,26 @@ import { getSession } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getSession()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(request.url)
     const classId = searchParams.get('classId')
 
     const where: any = {}
     if (classId) where.classId = classId
+
+    // Non-admin users can only see announcements from their classes
+    if (user.role !== 'admin') {
+      const userClasses = await db.classUser.findMany({
+        where: { userId: user.id },
+        select: { classId: true },
+      })
+      const classIds = userClasses.map(uc => uc.classId)
+      where.classId = classId && classIds.includes(classId) ? classId : { in: classIds }
+    }
 
     const announcements = await db.announcement.findMany({
       where,
@@ -78,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     // Create notifications for all students in the class
     const classUsers = await db.classUser.findMany({
-      where: { classId, role: 'siswa' },
+      where: { classId: effectiveClassId, role: 'siswa' },
       select: { userId: true },
     })
 
@@ -88,7 +103,7 @@ export async function POST(request: NextRequest) {
         title: 'Pengumuman Baru',
         message: `${title} di ${announcement.class.name}`,
         type: priority === 'high' ? 'warning' : 'info',
-        link: `class-detail:${classId}`,
+        link: `class-detail:${effectiveClassId}`,
       })),
     })
 

@@ -6,7 +6,7 @@ import {
   BookOpen, FileText, Users, Bell, Plus, ArrowLeft,
   Megaphone, Clock, Send, MessageSquare, X, Search,
   Pin, Heart, Trash2, AlertTriangle, Zap, Calendar,
-  UserMinus, Shield, GraduationCap, Share2, ThumbsUp, PartyPopper,
+  UserMinus, Shield, GraduationCap, Share2,
   Paperclip, TrendingUp, LogOut
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'

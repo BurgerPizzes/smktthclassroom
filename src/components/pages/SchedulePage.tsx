@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus,
-  Clock, MapPin, BookOpen, User as UserIcon, X, Trash2
+  Clock, MapPin, BookOpen, User as UserIcon, X
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'

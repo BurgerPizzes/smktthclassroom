@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp, TrendingDown, Minus, Target, Award, BookOpen,
   CheckCircle2, XCircle, Clock, BarChart3, PieChart, Calendar,
-  ArrowUpRight, ArrowDownRight, MinusCircle, Flame, Star,
-  FileText, Users, Activity, Loader2, AlertTriangle, Bell,
+  ArrowUpRight, ArrowDownRight, Flame, Star,
+  FileText, Users, Activity, AlertTriangle, Bell,
   ClockIcon, Timer, GraduationCap, ChevronRight
 } from 'lucide-react'
 import { useAppStore, type PageName } from '@/lib/store'

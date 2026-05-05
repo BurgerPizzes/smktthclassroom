@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, Upload, Search, Download, File, FileImage,
-  FileVideo, FileAudio, FileCode, FilePlus, X, Eye, ExternalLink, AlertCircle,
-  LayoutGrid, List, HardDrive, Sparkles, BookOpen
+  FileVideo, FileAudio, FileCode, FilePlus, X, Eye, AlertCircle,
+  LayoutGrid, List, HardDrive, BookOpen
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'

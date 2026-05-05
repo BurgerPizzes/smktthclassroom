@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageSquare, Send, ChevronDown, ChevronUp, Reply,
-  Megaphone, Search, Plus, Heart, ThumbsUp, Flame,
-  HelpCircle, Lightbulb, Bookmark, Filter, X, Trash2, Loader2
+  Megaphone, Search, Plus, Heart, Flame,
+  HelpCircle, Lightbulb, Filter, X, Trash2, Loader2
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'

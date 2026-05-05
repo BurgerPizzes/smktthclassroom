@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, Clock, ArrowLeft, Upload, Send, MessageSquare,
   CheckCircle2, XCircle, Star, AlertCircle, Download, Trash2,
-  Loader2, File, Image, FileCheck2, FolderOpen, Eye, Play, X
+  Loader2, File, FileCheck2, FolderOpen, Eye, Play, X
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'

@@ -4,6 +4,11 @@ import { getSession } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getSession()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(request.url)
     const announcementId = searchParams.get('announcementId')
     const assignmentId = searchParams.get('assignmentId')

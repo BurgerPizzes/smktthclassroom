@@ -3,9 +3,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  FileText, CheckCircle2, Clock, AlertCircle, Star,
+  FileText, CheckCircle2, Clock, AlertCircle,
   Search, ArrowUpRight, Filter, ArrowUpDown, BookOpen,
-  TrendingUp, Award, BarChart3, Download
+  BarChart3, Download
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'

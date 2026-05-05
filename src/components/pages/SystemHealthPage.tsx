@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   Activity, Users, Clock, HardDrive, Bell, Cpu,
-  ArrowUp, ArrowDown, RefreshCw, Download, Database,
+  RefreshCw, Download, Database,
   Trash2, FileText, Shield, Server, TrendingUp,
   AlertTriangle, CheckCircle2, XCircle, Zap, BookOpen
 } from 'lucide-react'

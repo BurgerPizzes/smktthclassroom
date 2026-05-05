@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Users, Search, Plus, Pencil, Trash2, Shield, X, UserPlus,
-  CheckCircle2, BookOpen, GraduationCap, User, Calendar,
-  ChevronDown, AlertTriangle
+  Users, Search, Pencil, Trash2, Shield, X, UserPlus,
+  BookOpen, GraduationCap, User, Calendar,
+  AlertTriangle
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'

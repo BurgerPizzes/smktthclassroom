@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  BookOpen, Plus, Search, Pencil, Trash2, X, Hash,
+  BookOpen, Plus, Search, Pencil, Trash2, X,
   GraduationCap, FileText, AlertTriangle, Library,
   Calculator, FlaskConical, Globe, BookMarked, Code,
-  Palette, Dumbbell, Music, Monitor, Microscope, Zap
+  Palette, Dumbbell, Music, Monitor, Microscope
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'

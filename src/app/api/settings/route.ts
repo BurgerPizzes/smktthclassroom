@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getSession } from '@/lib/auth'
 
 export async function GET() {
   try {
+    const user = await getSession()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const settings = await db.setting.findMany()
     const result: Record<string, string> = {}
     settings.forEach((s) => {
@@ -17,6 +23,14 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    const user = await getSession()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (user.role !== 'admin') {
+      return NextResponse.json({ error: 'Hanya admin yang dapat mengubah pengaturan' }, { status: 403 })
+    }
+
     const data = await request.json()
 
     const results = await Promise.all(

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { hashPassword } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,13 +10,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Semua field wajib diisi' }, { status: 400 })
     }
 
+    if (password.length < 6) {
+      return NextResponse.json({ error: 'Password minimal 6 karakter' }, { status: 400 })
+    }
+
     const existing = await db.user.findUnique({ where: { email } })
     if (existing) {
       return NextResponse.json({ error: 'Email sudah terdaftar' }, { status: 400 })
     }
 
+    // Only allow registering as siswa; guru/admin must be created by admin
+    const hashedPassword = await hashPassword(password)
     const user = await db.user.create({
-      data: { name, email, password, role: role || 'siswa' },
+      data: { name, email, password: hashedPassword, role: 'siswa' },
     })
 
     return NextResponse.json({

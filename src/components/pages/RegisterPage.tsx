@@ -174,31 +174,16 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              {/* Role selector */}
+              {/* Role selector - only siswa registration allowed, guru/admin created by admin */}
               <div className="space-y-2">
                 <label className="text-sm text-white/50">Peran</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { value: 'siswa', label: 'Siswa', icon: GraduationCap, color: 'from-emerald-500 to-green-500' },
-                    { value: 'guru', label: 'Guru', icon: BookOpen, color: 'from-blue-500 to-cyan-500' },
-                  ].map((r) => (
-                    <motion.button
-                      key={r.value}
-                      type="button"
-                      onClick={() => setRole(r.value)}
-                      className={`py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                        role === r.value
-                          ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white shadow-lg shadow-purple-500/30'
-                          : 'border border-white/12 text-white/50 hover:text-white/70 hover:border-white/20 bg-white/5'
-                      }`}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <r.icon className="w-4 h-4" />
-                      {r.label}
-                    </motion.button>
-                  ))}
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white shadow-lg shadow-purple-500/30">
+                    <GraduationCap className="w-4 h-4" />
+                    Siswa
+                  </div>
                 </div>
+                <p className="text-xs text-white/30 text-center">Akun guru dibuat oleh admin</p>
               </div>
 
               <motion.button

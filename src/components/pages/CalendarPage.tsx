@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, ChevronRight, Calendar as CalendarIcon,
-  FileText, Clock, X, AlertTriangle, Timer, BookOpen, FlaskConical, Zap,
-  BarChart3, Hash
+  FileText, Clock, X, AlertTriangle, Timer, BookOpen, Zap,
+  BarChart3
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay, isToday, differenceInDays } from 'date-fns'

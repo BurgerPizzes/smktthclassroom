@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Settings, Globe, Bell, Shield, Palette, Save, RefreshCw,
-  Clock, Sun, Moon, Volume2, Lock, KeyRound, Fingerprint,
+  Globe, Bell, Shield, Palette, Save, RefreshCw,
+  Clock, Sun, Volume2, Lock, KeyRound, Fingerprint,
   Smartphone, Mail, MessageSquare, FileText, Users, Calendar
 } from 'lucide-react'
 import { toast } from 'sonner'

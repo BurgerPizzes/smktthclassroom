@@ -39,6 +39,14 @@ export async function PUT(request: NextRequest) {
     }
 
     if (id) {
+      // Verify the notification belongs to the authenticated user
+      const existing = await db.notification.findUnique({ where: { id } })
+      if (!existing) {
+        return NextResponse.json({ error: 'Notifikasi tidak ditemukan' }, { status: 404 })
+      }
+      if (existing.userId !== user.id) {
+        return NextResponse.json({ error: 'Tidak memiliki akses' }, { status: 403 })
+      }
       const notification = await db.notification.update({
         where: { id },
         data: { read: read ?? true },
