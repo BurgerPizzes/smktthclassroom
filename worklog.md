@@ -1774,3 +1774,55 @@ Stage Summary:
 4. Add assignment file download tracking
 5. Add student progress analytics improvements
 6. Add more SMK TTH specific features (school calendar, schedule integration)
+
+---
+Task ID: 15
+Agent: Main Agent (Bug Fix)
+Task: Fix 4 user-requested issues
+
+Work Log:
+
+### Issue 1: Remove Google/Microsoft Login Buttons from LoginPage
+- **File**: `src/components/pages/LoginPage.tsx`
+- Removed entire social login section (divider + Google button + Microsoft button)
+- Removed unused `Globe` and `MonitorSmartphone` icons from imports
+
+### Issue 2A: Fix handleRemoveMember in ClassDetailPage
+- **File**: `src/components/pages/ClassDetailPage.tsx`
+- Fixed `handleRemoveMember` to call correct API endpoint: `DELETE /api/classes/${classId}/members/${userId}` (URL params) instead of `DELETE /api/classes/members` (JSON body)
+- Added `userId` as third argument to `handleRemoveMember` function signature
+- Updated both `handleRemoveMember` call sites (guru members and siswa members) to pass `m.user.id` as third argument
+- Changed remove member button visibility from `isClassOwner` to `isGuru` so ALL guru/admin users can remove students, not just the class creator
+- **File**: `src/app/api/classes/[id]/members/[userId]/route.ts`
+- Updated API to allow any guru in the class to remove members (not just class creator/admin)
+
+### Issue 2B: Add class deletion functionality
+- **File**: `src/app/api/classes/[id]/route.ts` (NEW)
+- Created DELETE endpoint for class deletion
+- Only class creator or admin can delete the class
+- Cascading deletes handle related data (classUsers, assignments, etc.)
+- **File**: `src/components/pages/ClassDetailPage.tsx`
+- Added `confirmDelete` state and `handleDeleteClass` handler
+- Added "Hapus Kelas" (Delete Class) button with confirmation in hero header section
+- Only visible for class owner or admin
+
+### Issue 3: Student can exit/leave enrolled classes from ClassesPage
+- **File**: `src/components/pages/ClassesPage.tsx`
+- Added `LogOut` and `Trash2` icons to imports
+- Added `leavingClassId` state and `handleLeaveClass` handler with two-click confirmation
+- Updated `ClassItem` interface to include `creator?: { id: string; name: string }` (was `creator: { name: string }`)
+- Added "Keluar" exit button on class cards for siswa users (not for classes they created)
+- Button shows "Yakin?" on first click as confirmation
+- **File**: `src/app/api/classes/route.ts`
+- Updated all `creator` select clauses to include `id: true` alongside `name: true` so frontend can check `cls.creator?.id !== user?.id`
+
+### Issue 4: Most recent assignments at top on class assignment page
+- **File**: `src/app/api/assignments/route.ts`
+- Changed `orderBy: { dueDate: 'asc' }` to `orderBy: { createdAt: 'desc' }`
+- Most recently created assignments now appear at the top
+
+Stage Summary:
+- All 4 issues fixed successfully
+- Zero lint errors
+- Dev server running cleanly
+- Committed and pushed to GitHub (BurgerPizzas/smktthclassroom.git)
