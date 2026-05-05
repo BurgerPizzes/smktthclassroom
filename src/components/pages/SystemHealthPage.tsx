@@ -6,7 +6,7 @@ import {
   Activity, Users, Clock, HardDrive, Bell, Cpu,
   ArrowUp, ArrowDown, RefreshCw, Download, Database,
   Trash2, FileText, Shield, Server, TrendingUp,
-  AlertTriangle, CheckCircle2, XCircle, Zap
+  AlertTriangle, CheckCircle2, XCircle, Zap, BookOpen
 } from 'lucide-react'
 import { toast } from 'sonner'
 
