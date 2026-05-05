@@ -12,12 +12,18 @@ export async function DELETE(
 
     const { id: classId, userId: targetUserId } = await params
 
-    // Only class creator or admin can remove members
+    // Only class creator, admin, or any guru in the class can remove members
     const classData = await db.class.findUnique({ where: { id: classId } })
     if (!classData) return NextResponse.json({ error: 'Kelas tidak ditemukan' }, { status: 404 })
 
-    if (classData.createdBy !== user.id && user.role !== 'admin') {
-      return NextResponse.json({ error: 'Hanya pembuat kelas atau admin yang bisa menghapus anggota' }, { status: 403 })
+    const isCreator = classData.createdBy === user.id
+    const isAdmin = user.role === 'admin'
+    const isGuruInClass = await db.classUser.findFirst({
+      where: { classId, userId: user.id, role: 'guru' },
+    })
+
+    if (!isCreator && !isAdmin && !isGuruInClass) {
+      return NextResponse.json({ error: 'Hanya guru, pembuat kelas, atau admin yang bisa menghapus anggota' }, { status: 403 })
     }
 
     // Can't remove the class creator

@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen, Plus, Search, Users, Hash, GraduationCap,
   Palette, Calculator, FlaskConical, Globe, BookMarked, Code,
-  Zap, ArrowRight, Music, Dumbbell, Monitor, Microscope
+  Zap, ArrowRight, Music, Dumbbell, Monitor, Microscope,
+  LogOut, Trash2
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'
@@ -28,7 +29,7 @@ interface ClassItem {
   grade?: number
   direction?: string
   subject?: { name: string; code?: string }
-  creator: { name: string }
+  creator?: { id: string; name: string }
   classUsers?: ClassUser[]
   _count?: { classUsers: number; assignments: number }
 }
@@ -118,6 +119,7 @@ export default function ClassesPage() {
   const [newClass, setNewClass] = useState({ name: '', description: '', subjectId: '', code: '', grade: 10, direction: 'RPL' })
   const [subjects, setSubjects] = useState<Array<{id: string; name: string; code?: string}>>([])
   const [quickJoinCode, setQuickJoinCode] = useState('')
+  const [leavingClassId, setLeavingClassId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -203,6 +205,26 @@ export default function ClassesPage() {
       toast.error('Terjadi kesalahan')
     }
   }, [joinCode])
+
+  const handleLeaveClass = useCallback(async (classId: string, className: string) => {
+    if (leavingClassId !== classId) {
+      setLeavingClassId(classId)
+      return
+    }
+    try {
+      const res = await fetch(`/api/classes/${classId}/leave`, { method: 'POST' })
+      if (!res.ok) {
+        const data = await res.json()
+        toast.error(data.error || 'Gagal keluar dari kelas')
+        return
+      }
+      toast.success(`Berhasil keluar dari ${className}`)
+      setClasses(prev => prev.filter(c => c.id !== classId))
+      setLeavingClassId(null)
+    } catch {
+      toast.error('Terjadi kesalahan')
+    }
+  }, [leavingClassId])
 
   const handleQuickJoin = useCallback(() => {
     if (quickJoinCode.trim()) {
@@ -391,9 +413,27 @@ export default function ClassesPage() {
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-[var(--glass-text-muted)] flex items-center gap-1">
-                      <BookOpen className="w-3.5 h-3.5" /> {cls._count?.assignments || 0} tugas
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[var(--glass-text-muted)] flex items-center gap-1">
+                        <BookOpen className="w-3.5 h-3.5" /> {cls._count?.assignments || 0} tugas
+                      </span>
+                      {user?.role === 'siswa' && cls.creator?.id !== user?.id && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleLeaveClass(cls.id, cls.name)
+                          }}
+                          className={`text-xs transition-colors flex items-center gap-0.5 ml-auto ${
+                            leavingClassId === cls.id
+                              ? 'text-red-400 font-medium'
+                              : 'text-[var(--glass-text-muted)] hover:text-red-400'
+                          }`}
+                          title="Keluar dari kelas"
+                        >
+                          <LogOut className="w-3 h-3" /> {leavingClassId === cls.id ? 'Yakin?' : 'Keluar'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>

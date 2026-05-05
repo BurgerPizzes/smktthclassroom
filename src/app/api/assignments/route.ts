@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         subject: true,
         creator: { select: { name: true } },
       },
-      orderBy: { dueDate: 'asc' },
+      orderBy: { createdAt: 'desc' },
     })
 
     return NextResponse.json(assignments)

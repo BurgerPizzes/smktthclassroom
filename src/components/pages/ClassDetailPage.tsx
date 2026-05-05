@@ -91,6 +91,7 @@ export default function ClassDetailPage() {
   const [pinnedAnnouncements, setPinnedAnnouncements] = useState<Set<string>>(new Set())
   const [reactions, setReactions] = useState<Record<string, Record<string, number | boolean>>>({})
   const [confirmLeave, setConfirmLeave] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const togglePin = useCallback((annId: string) => {
     setPinnedAnnouncements((prev) => {
@@ -166,15 +167,14 @@ export default function ClassDetailPage() {
     }
   }, [newAnn, classId])
 
-  const handleRemoveMember = useCallback(async (classUserId: string, memberName: string) => {
+  const handleRemoveMember = useCallback(async (classUserId: string, memberName: string, userId: string) => {
     try {
-      const res = await fetch(`/api/classes/members`, {
+      const res = await fetch(`/api/classes/${classId}/members/${userId}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classId, classUserId }),
       })
       if (!res.ok) {
-        toast.error('Gagal menghapus anggota')
+        const data = await res.json()
+        toast.error(data.error || 'Gagal menghapus anggota')
         return
       }
       setClassData((prev) => prev ? {
@@ -187,6 +187,21 @@ export default function ClassDetailPage() {
       toast.error('Terjadi kesalahan')
     }
   }, [classId])
+
+  const handleDeleteClass = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/classes/${classId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json()
+        toast.error(data.error || 'Gagal menghapus kelas')
+        return
+      }
+      toast.success('Kelas berhasil dihapus')
+      setPage('classes')
+    } catch {
+      toast.error('Terjadi kesalahan')
+    }
+  }, [classId, setPage])
 
   const handleLeaveClass = useCallback(async () => {
     try {
@@ -272,6 +287,36 @@ export default function ClassDetailPage() {
                 </span>
               )}
             </div>
+
+            {/* Delete Class Button - only for class creator or admin */}
+            {isClassOwner && (
+              <div className="mt-4">
+                {confirmDelete ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-red-300">Hapus kelas ini secara permanen?</span>
+                    <button
+                      onClick={handleDeleteClass}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-red-500/80 text-white hover:bg-red-500 font-medium transition-colors"
+                    >
+                      Ya, Hapus
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(false)}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 transition-colors"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    className="flex items-center gap-1.5 text-xs text-white/40 hover:text-red-300 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Hapus Kelas
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Exit Class Button */}
             {!isClassOwner && (
@@ -609,13 +654,13 @@ export default function ClassDetailPage() {
                             Guru
                           </span>
                         </div>
-                        {isClassOwner && m.user.id !== user?.id && (
+                        {isGuru && m.user.id !== user?.id && (
                           <div className="mt-2 pt-2 border-t border-[var(--glass-border)] flex justify-end">
                             {confirmRemove === m.id ? (
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-[var(--badge-red-text)]">Yakin?</span>
                                 <button
-                                  onClick={() => handleRemoveMember(m.id, m.user.name)}
+                                  onClick={() => handleRemoveMember(m.id, m.user.name, m.user.id)}
                                   className="text-xs px-2 py-1 rounded bg-[var(--badge-red-bg)] text-[var(--badge-red-text)] hover:opacity-80 font-medium"
                                 >
                                   Hapus
@@ -669,13 +714,13 @@ export default function ClassDetailPage() {
                             Siswa
                           </span>
                         </div>
-                        {isClassOwner && (
+                        {isGuru && (
                           <div className="mt-2 pt-2 border-t border-[var(--glass-border)] flex justify-end">
                             {confirmRemove === m.id ? (
                               <div className="flex items-center gap-2">
                                 <span className="text-xs text-[var(--badge-red-text)]">Yakin?</span>
                                 <button
-                                  onClick={() => handleRemoveMember(m.id, m.user.name)}
+                                  onClick={() => handleRemoveMember(m.id, m.user.name, m.user.id)}
                                   className="text-xs px-2 py-1 rounded bg-[var(--badge-red-bg)] text-[var(--badge-red-text)] hover:opacity-80 font-medium"
                                 >
                                   Hapus

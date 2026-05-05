@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         where: { id },
         include: {
           subject: true,
-          creator: { select: { name: true } },
+          creator: { select: { id: true, name: true } },
           classUsers: {
             include: { user: { select: { id: true, name: true, email: true, avatar: true } } },
           },
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       classes = await db.class.findMany({
         include: {
           subject: true,
-          creator: { select: { name: true } },
+          creator: { select: { id: true, name: true } },
           classUsers: {
             include: { user: { select: { id: true, name: true, email: true, avatar: true } } },
           },
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
         where: { id: { in: classIds } },
         include: {
           subject: true,
-          creator: { select: { name: true } },
+          creator: { select: { id: true, name: true } },
           classUsers: {
             include: { user: { select: { id: true, name: true, email: true, avatar: true } } },
           },
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       },
       include: {
         subject: true,
-        creator: { select: { name: true } },
+        creator: { select: { id: true, name: true } },
         classUsers: {
           include: { user: { select: { id: true, name: true, email: true, avatar: true } } },
         },
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
       where: { id: cls.id },
       include: {
         subject: true,
-        creator: { select: { name: true } },
+        creator: { select: { id: true, name: true } },
         classUsers: {
           include: { user: { select: { id: true, name: true, email: true, avatar: true } } },
         },

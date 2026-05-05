@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { GraduationCap, Mail, Lock, Eye, EyeOff, ChevronDown, ChevronUp, LogIn, KeyRound, BookOpen, Users, Shield, Sparkles, Globe, MonitorSmartphone } from 'lucide-react'
+import { GraduationCap, Mail, Lock, Eye, EyeOff, ChevronDown, ChevronUp, LogIn, KeyRound, BookOpen, Users, Shield, Sparkles } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { toast } from 'sonner'
 
@@ -236,33 +236,6 @@ export default function LoginPage() {
                 )}
               </motion.button>
             </form>
-
-            {/* Social Login Buttons */}
-            <div className="space-y-2">
-              <div className="relative flex items-center gap-3">
-                <div className="flex-1 h-px bg-white/10" />
-                <span className="text-[10px] text-white/30">atau masuk dengan</span>
-                <div className="flex-1 h-px bg-white/10" />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => toast.info('Fitur segera hadir')}
-                  className="social-login-btn"
-                >
-                  <Globe className="w-4 h-4" />
-                  Google
-                </button>
-                <button
-                  type="button"
-                  onClick={() => toast.info('Fitur segera hadir')}
-                  className="social-login-btn"
-                >
-                  <MonitorSmartphone className="w-4 h-4" />
-                  Microsoft
-                </button>
-              </div>
-            </div>
 
             {/* Note: Registration is admin-only */}
 
