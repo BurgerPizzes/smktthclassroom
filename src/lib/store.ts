@@ -6,6 +6,7 @@ export type PageName =
   | 'login'
   | 'dashboard'
   | 'classes'
+  | 'subjects'
   | 'class-detail'
   | 'assignment-detail'
   | 'admin-settings'

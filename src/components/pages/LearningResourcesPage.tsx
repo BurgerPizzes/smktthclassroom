@@ -459,7 +459,7 @@ export default function LearningResourcesPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'name')}
-            className="glass-input text-sm w-auto sm:w-40"
+            className="glass-input styled-select text-sm w-auto sm:w-40"
           >
             <option value="newest">Terbaru</option>
             <option value="oldest">Terlama</option>
@@ -816,7 +816,7 @@ export default function LearningResourcesPage() {
                   <select
                     value={uploadForm.classId}
                     onChange={(e) => setUploadForm({ ...uploadForm, classId: e.target.value })}
-                    className="glass-input w-full"
+                    className="glass-input styled-select w-full"
                   >
                     <option value="">Pilih Kelas</option>
                     {userClasses.map((cls) => (

@@ -702,7 +702,7 @@ export default function AttendancePage() {
           <select
             value={selectedClassId}
             onChange={(e) => setSelectedClassId(e.target.value)}
-            className="glass-input flex-1"
+            className="glass-input styled-select flex-1"
           >
             <option value="">Pilih Kelas</option>
             {teacherClasses.map((cls) => (

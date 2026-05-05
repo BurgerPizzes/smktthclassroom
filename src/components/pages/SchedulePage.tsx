@@ -656,7 +656,7 @@ export default function SchedulePage() {
                   <select
                     value={formClassId}
                     onChange={(e) => setFormClassId(e.target.value)}
-                    className="glass-input text-sm"
+                    className="glass-input styled-select text-sm"
                   >
                     <option value="">Pilih kelas</option>
                     {classes.map((c) => (

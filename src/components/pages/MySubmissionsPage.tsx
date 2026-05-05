@@ -317,7 +317,7 @@ export default function MySubmissionsPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="glass-input pr-8 text-sm appearance-none cursor-pointer"
+              className="glass-input styled-select pr-8 text-sm cursor-pointer"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>

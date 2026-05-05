@@ -272,7 +272,7 @@ export default function ProgressAnalyticsPage() {
           <select
             value={selectedStudentId}
             onChange={(e) => setSelectedStudentId(e.target.value)}
-            className="glass-input max-w-xs"
+            className="glass-input styled-select max-w-xs"
           >
             <option value="">Ringkasan Kelas</option>
             {data.classWideAnalytics.students.map((s) => (

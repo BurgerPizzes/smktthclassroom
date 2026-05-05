@@ -72,10 +72,11 @@ model ClassUser {
 }
 
 model Subject {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  code      String?
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String?
+  description String?
+  createdAt   DateTime @default(now())
 
   classes     Class[]
   assignments Assignment[]

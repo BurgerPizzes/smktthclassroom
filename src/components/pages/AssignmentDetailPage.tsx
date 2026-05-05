@@ -642,33 +642,46 @@ export default function AssignmentDetailPage() {
 
                       {/* Grading section */}
                       {sub.status !== 'graded' && (
-                        <div className="flex items-center gap-2 pt-2 border-t border-[var(--glass-border)]">
-                          <input
-                            type="number"
-                            placeholder="Nilai"
-                            min={0}
-                            max={assignment?.points || 100}
-                            value={gradeInput[sub.id] || ''}
-                            onChange={(e) => setGradeInput({ ...gradeInput, [sub.id]: e.target.value })}
-                            className="glass-input w-20 text-sm py-1.5"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Feedback..."
-                            value={feedbackInput[sub.id] || ''}
-                            onChange={(e) => setFeedbackInput({ ...feedbackInput, [sub.id]: e.target.value })}
-                            className="glass-input flex-1 text-sm py-1.5"
-                          />
-                          <button onClick={() => handleGrade(sub.id)} className="btn-gradient text-xs py-1.5 px-3">
-                            Nilai
-                          </button>
+                        <div className="space-y-3 pt-3 border-t border-[var(--glass-border)]">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <label className="text-xs text-[var(--glass-text-muted)] whitespace-nowrap">Nilai:</label>
+                              <input
+                                type="number"
+                                placeholder="0"
+                                min={0}
+                                max={assignment?.points || 100}
+                                value={gradeInput[sub.id] || ''}
+                                onChange={(e) => setGradeInput({ ...gradeInput, [sub.id]: e.target.value })}
+                                className="glass-input w-24 text-sm py-1.5"
+                              />
+                              <span className="text-xs text-[var(--glass-text-muted)]">/ {assignment?.points || 100}</span>
+                            </div>
+                            <button onClick={() => handleGrade(sub.id)} className="btn-gradient text-xs py-1.5 px-4 ml-auto">
+                              Simpan Nilai
+                            </button>
+                          </div>
+                          <div>
+                            <label className="text-xs text-[var(--glass-text-muted)] mb-1 block">Feedback:</label>
+                            <textarea
+                              placeholder="Tulis feedback untuk siswa..."
+                              rows={2}
+                              value={feedbackInput[sub.id] || ''}
+                              onChange={(e) => setFeedbackInput({ ...feedbackInput, [sub.id]: e.target.value })}
+                              className="glass-input w-full text-sm py-2 resize-none"
+                            />
+                          </div>
                         </div>
                       )}
                       {sub.status === 'graded' && (
-                        <div className="flex items-center gap-2 text-sm pt-2 border-t border-[var(--glass-border)]">
-                          <Star className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">{Number.isFinite(sub.grade) ? Math.round(sub.grade) : 0}/{assignment?.points}</span>
-                          {sub.feedback && <span className="text-[var(--glass-text-muted)] text-xs">— {sub.feedback}</span>}
+                        <div className="pt-3 border-t border-[var(--glass-border)] space-y-1">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Star className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">{Number.isFinite(sub.grade) ? Math.round(sub.grade) : 0}/{assignment?.points}</span>
+                          </div>
+                          {sub.feedback && (
+                            <p className="text-sm text-[var(--glass-text-secondary)] pl-6 italic">&ldquo;{sub.feedback}&rdquo;</p>
+                          )}
                         </div>
                       )}
                     </div>

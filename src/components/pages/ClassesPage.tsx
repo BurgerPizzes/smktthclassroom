@@ -547,7 +547,7 @@ export default function ClassesPage() {
                   <select
                     value={newClass.subjectId}
                     onChange={(e) => setNewClass({ ...newClass, subjectId: e.target.value })}
-                    className="glass-input"
+                    className="glass-input styled-select"
                   >
                     <option value="">Pilih Mata Pelajaran (opsional)</option>
                     {subjects.map((s) => (

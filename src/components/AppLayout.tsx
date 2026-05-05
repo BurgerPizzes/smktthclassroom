@@ -7,7 +7,7 @@ import {
   LayoutDashboard, BookOpen, FileText, Calendar, MessageSquare,
   ClipboardCheck, Settings, Users, FolderOpen,
   GraduationCap, Lock, ChevronDown, TrendingUp,
-  CalendarDays, Activity, Heart, ExternalLink
+  CalendarDays, Activity, Heart, ExternalLink, Library
 } from 'lucide-react'
 import { useAppStore, type PageName } from '@/lib/store'
 import { useTheme } from 'next-themes'
@@ -30,6 +30,7 @@ import UserManagementPage from '@/components/pages/UserManagementPage'
 import LearningResourcesPage from '@/components/pages/LearningResourcesPage'
 import ProgressAnalyticsPage from '@/components/pages/ProgressAnalyticsPage'
 import SchedulePage from '@/components/pages/SchedulePage'
+import SubjectsPage from '@/components/pages/SubjectsPage'
 import SystemHealthPage from '@/components/pages/SystemHealthPage'
 
 interface NavItem {
@@ -44,6 +45,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { page: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'Utama' },
   { page: 'classes', label: 'Kelas', icon: BookOpen, section: 'Utama' },
+  { page: 'subjects', label: 'Mata Pelajaran', icon: Library, roles: ['guru', 'admin'], section: 'Pembelajaran' },
   { page: 'my-submissions', label: 'Submissions', icon: FileText, section: 'Utama' },
   { page: 'progress-analytics', label: 'Progres Belajar', icon: TrendingUp, roles: ['siswa'], roleLabels: { siswa: 'Progres Belajar' }, section: 'Pembelajaran' },
   { page: 'schedule', label: 'Jadwal', icon: CalendarDays, section: 'Pembelajaran' },
@@ -87,6 +89,7 @@ function PageRenderer() {
     login: LoginPage,
     dashboard: DashboardPage,
     classes: ClassesPage,
+    subjects: SubjectsPage,
     'class-detail': ClassDetailPage,
     'assignment-detail': AssignmentDetailPage,
     'my-submissions': MySubmissionsPage,
