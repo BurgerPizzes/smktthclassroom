@@ -264,16 +264,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Register link */}
-            <p className="text-center text-sm text-white/40">
-              Belum punya akun?{' '}
-              <button
-                onClick={() => setPage('register')}
-                className="text-white/70 hover:text-white transition-colors font-medium"
-              >
-                Daftar sekarang
-              </button>
-            </p>
+            {/* Note: Registration is admin-only */}
 
             {/* Demo Accounts */}
             <div className="border-t border-white/10 pt-4">

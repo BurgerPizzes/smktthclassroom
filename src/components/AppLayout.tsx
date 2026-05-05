@@ -14,7 +14,6 @@ import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
 
 import LoginPage from '@/components/pages/LoginPage'
-import RegisterPage from '@/components/pages/RegisterPage'
 import DashboardPage from '@/components/pages/DashboardPage'
 import ClassesPage from '@/components/pages/ClassesPage'
 import ClassDetailPage from '@/components/pages/ClassDetailPage'
@@ -46,7 +45,7 @@ const NAV_ITEMS: NavItem[] = [
   { page: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'Utama' },
   { page: 'classes', label: 'Kelas', icon: BookOpen, section: 'Utama' },
   { page: 'my-submissions', label: 'Submissions', icon: FileText, section: 'Utama' },
-  { page: 'progress-analytics', label: 'Progres Belajar', icon: TrendingUp, roleLabels: { guru: 'Analitik', admin: 'Analitik', siswa: 'Progres Belajar' }, section: 'Pembelajaran' },
+  { page: 'progress-analytics', label: 'Progres Belajar', icon: TrendingUp, roles: ['siswa'], roleLabels: { siswa: 'Progres Belajar' }, section: 'Pembelajaran' },
   { page: 'schedule', label: 'Jadwal', icon: CalendarDays, section: 'Pembelajaran' },
   { page: 'calendar', label: 'Kalender', icon: Calendar, section: 'Pembelajaran' },
   { page: 'discussions', label: 'Diskusi', icon: MessageSquare, section: 'Pembelajaran' },
@@ -86,7 +85,6 @@ function PageRenderer() {
 
   const pages: Record<PageName, React.ComponentType> = {
     login: LoginPage,
-    register: RegisterPage,
     dashboard: DashboardPage,
     classes: ClassesPage,
     'class-detail': ClassDetailPage,
@@ -126,7 +124,7 @@ function AppLayoutInner() {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
 
-  const isAuthPage = currentPage === 'login' || currentPage === 'register'
+  const isAuthPage = currentPage === 'login'
 
   // Check for existing session on mount
   useEffect(() => {
@@ -137,7 +135,7 @@ function AppLayoutInner() {
           const data = await res.json()
           if (data.user) {
             setUser(data.user)
-            if (currentPage === 'login' || currentPage === 'register') {
+            if (currentPage === 'login') {
               setPage('dashboard')
             }
           }
@@ -187,11 +185,7 @@ function AppLayoutInner() {
 
   // Auth pages: no sidebar/layout
   if (isAuthPage || !user) {
-    return (
-      <>
-        {currentPage === 'register' ? <RegisterPage /> : <LoginPage />}
-      </>
-    )
+    return <LoginPage />
   }
 
   const filteredNav = NAV_ITEMS.filter((item) => {

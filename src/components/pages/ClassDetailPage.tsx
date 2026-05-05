@@ -7,7 +7,7 @@ import {
   Megaphone, Clock, Send, MessageSquare, X, Search,
   Pin, Heart, Trash2, AlertTriangle, Zap, Calendar,
   UserMinus, Shield, GraduationCap, Share2, ThumbsUp, PartyPopper,
-  Paperclip, TrendingUp
+  Paperclip, TrendingUp, LogOut
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format, formatDistanceToNow } from 'date-fns'
@@ -19,6 +19,8 @@ interface ClassData {
   name: string
   description?: string
   code: string
+  grade?: number
+  direction?: string
   subject?: { name: string }
   creator: { name: string; id: string }
   classUsers: Array<{ id: string; role: string; user: { id: string; name: string; email: string; avatar?: string } }>
@@ -88,6 +90,7 @@ export default function ClassDetailPage() {
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null)
   const [pinnedAnnouncements, setPinnedAnnouncements] = useState<Set<string>>(new Set())
   const [reactions, setReactions] = useState<Record<string, Record<string, number | boolean>>>({})
+  const [confirmLeave, setConfirmLeave] = useState(false)
 
   const togglePin = useCallback((annId: string) => {
     setPinnedAnnouncements((prev) => {
@@ -185,6 +188,23 @@ export default function ClassDetailPage() {
     }
   }, [classId])
 
+  const handleLeaveClass = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/classes/${classId}/leave`, {
+        method: 'POST',
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        toast.error(data.error || 'Gagal keluar dari kelas')
+        return
+      }
+      toast.success('Berhasil keluar dari kelas')
+      setPage('classes')
+    } catch {
+      toast.error('Terjadi kesalahan')
+    }
+  }, [classId, setPage])
+
   const toggleLike = useCallback((annId: string) => {
     setLikedAnnouncements((prev) => {
       const next = new Set(prev)
@@ -242,11 +262,46 @@ export default function ClassDetailPage() {
             {classData?.description && (
               <p className="text-white/50 text-sm mt-2">{classData.description}</p>
             )}
-            <div className="flex items-center gap-4 mt-3 text-sm text-white/60">
+            <div className="flex items-center gap-4 mt-3 text-sm text-white/60 flex-wrap">
               <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {members.length} anggota</span>
               <span className="flex items-center gap-1"><FileText className="w-4 h-4" /> {assignments.length} tugas</span>
               <span className="bg-white/10 px-2 py-0.5 rounded font-mono text-xs">Kode: {classData?.code}</span>
+              {classData?.grade && classData?.direction && (
+                <span className="bg-gradient-to-r from-white/20 to-white/10 px-2.5 py-0.5 rounded-lg text-xs font-semibold text-white/80">
+                  Kelas {classData.grade}-{classData.direction}
+                </span>
+              )}
             </div>
+
+            {/* Exit Class Button */}
+            {!isClassOwner && (
+              <div className="mt-4">
+                {confirmLeave ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-red-300">Keluar dari kelas ini?</span>
+                    <button
+                      onClick={handleLeaveClass}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-red-500/80 text-white hover:bg-red-500 font-medium transition-colors"
+                    >
+                      Ya, Keluar
+                    </button>
+                    <button
+                      onClick={() => setConfirmLeave(false)}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-white/10 text-white/70 hover:bg-white/20 transition-colors"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmLeave(true)}
+                    className="flex items-center gap-1.5 text-xs text-white/40 hover:text-red-300 transition-colors"
+                  >
+                    <LogOut className="w-3.5 h-3.5" /> Keluar dari Kelas
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

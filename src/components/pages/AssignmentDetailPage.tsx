@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, Clock, ArrowLeft, Upload, Send, MessageSquare,
   CheckCircle2, XCircle, Star, AlertCircle, Download, Trash2,
-  Loader2, File, Image, FileCheck2, FolderOpen, Eye
+  Loader2, File, Image, FileCheck2, FolderOpen, Eye, Play, X
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'
@@ -33,6 +33,7 @@ export default function AssignmentDetailPage() {
   const [commentText, setCommentText] = useState('')
   const [classResources, setClassResources] = useState<any[]>([])
   const [downloadCounts, setDownloadCounts] = useState<Record<string, number>>({})
+  const [previewFile, setPreviewFile] = useState<{ url: string; name: string; type: string } | null>(null)
 
   useEffect(() => {
     if (!assignmentId) return
@@ -256,6 +257,27 @@ export default function AssignmentDetailPage() {
 
   const isImageFile = (type: string) => type.startsWith('image/')
   const isPdfFile = (type: string) => type === 'application/pdf'
+  const isVideoFile = (type: string) => type.startsWith('video/')
+  const isAudioFile = (type: string) => type.startsWith('audio/')
+
+  // Determine file type from URL extension
+  const getFileTypeFromUrl = (url: string): string => {
+    const ext = url.split('.').pop()?.toLowerCase() || ''
+    const imageExts = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp']
+    const videoExts = ['mp4', 'webm', 'ogg', 'mov', 'avi']
+    const audioExts = ['mp3', 'wav', 'ogg', 'aac', 'flac']
+    const pdfExts = ['pdf']
+    if (imageExts.includes(ext)) return 'image'
+    if (videoExts.includes(ext)) return 'video'
+    if (audioExts.includes(ext)) return 'audio'
+    if (pdfExts.includes(ext)) return 'pdf'
+    return 'other'
+  }
+
+  const openPreview = (url: string, name?: string) => {
+    const fileType = getFileTypeFromUrl(url)
+    setPreviewFile({ url, name: name || url.split('/').pop() || 'File', type: fileType })
+  }
 
   // File type badge config
   const getFileTypeBadge = (url: string) => {
@@ -423,16 +445,23 @@ export default function AssignmentDetailPage() {
                   </div>
                   {mySubmission.content && <p className="text-sm text-[var(--glass-text-secondary)] mb-2">{mySubmission.content}</p>}
                   {mySubmission.fileUrl && (
-                    <div className="flex items-center gap-2">
-                      <a href={mySubmission.fileUrl} download className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline">
-                        <Download className="w-3 h-3" /> {mySubmission.fileUrl.split('/').pop()}
-                      </a>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${getFileTypeBadge(mySubmission.fileUrl).bg} ${getFileTypeBadge(mySubmission.fileUrl).color}`}>
-                        {getFileTypeBadge(mySubmission.fileUrl).label}
-                      </span>
-                      <span className="flex items-center gap-0.5 text-[10px] text-[var(--glass-text-muted)]">
-                        <Download className="w-3 h-3" /> {downloadCounts['my-sub'] || 0}
-                      </span>
+                    <div className="mt-2 p-3 rounded-lg bg-[var(--glass-input-bg)] border border-[var(--glass-border)]">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <a href={mySubmission.fileUrl} download className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline truncate">
+                            <Download className="w-3 h-3 shrink-0" /> {mySubmission.fileUrl.split('/').pop()}
+                          </a>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${getFileTypeBadge(mySubmission.fileUrl).bg} ${getFileTypeBadge(mySubmission.fileUrl).color}`}>
+                            {getFileTypeBadge(mySubmission.fileUrl).label}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => openPreview(mySubmission.fileUrl)}
+                          className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-[var(--badge-blue-bg)] text-[var(--badge-blue-text)] hover:opacity-80 transition-opacity shrink-0"
+                        >
+                          <Eye className="w-3 h-3" /> Lihat
+                        </button>
+                      </div>
                     </div>
                   )}
                   {mySubmission.status === 'graded' && (
@@ -558,15 +587,18 @@ export default function AssignmentDetailPage() {
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Submissions ({submissions.length})
               </h2>
               {submissions.length > 0 ? (
-                <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+                <div className="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar">
                   {submissions.map((sub) => (
-                    <div key={sub.id} className="glass-card p-4 space-y-2">
+                    <div key={sub.id} className="glass-card p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
                             {sub.user?.name?.charAt(0) || '?'}
                           </div>
-                          <span className="text-sm text-[var(--glass-text)] font-medium">{sub.user?.name || 'Siswa'}</span>
+                          <div>
+                            <span className="text-sm text-[var(--glass-text)] font-medium">{sub.user?.name || 'Siswa'}</span>
+                            <p className="text-[10px] text-[var(--glass-text-muted)]">{sub.user?.email || ''}</p>
+                          </div>
                         </div>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
                           sub.status === 'graded' ? 'bg-[var(--badge-green-bg)] text-[var(--badge-green-text)]' :
@@ -576,20 +608,41 @@ export default function AssignmentDetailPage() {
                           {sub.status === 'graded' ? 'Dinilai' : sub.status === 'late' ? 'Terlambat' : 'Terkumpul'}
                         </span>
                       </div>
-                      {sub.content && <p className="text-xs text-[var(--glass-text-secondary)]">{sub.content}</p>}
-                      {sub.fileUrl && (
-                        <div className="flex items-center gap-2">
-                          <a href={sub.fileUrl} download className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline">
-                            <Download className="w-3 h-3" /> {sub.fileUrl.split('/').pop()}
-                          </a>
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${getFileTypeBadge(sub.fileUrl).bg} ${getFileTypeBadge(sub.fileUrl).color}`}>
-                            {getFileTypeBadge(sub.fileUrl).label}
-                          </span>
+
+                      {/* Submission content */}
+                      {sub.content && (
+                        <div className="p-3 rounded-lg bg-[var(--glass-input-bg)] border border-[var(--glass-border)]">
+                          <p className="text-xs text-[var(--glass-text-muted)] mb-1 font-medium">Jawaban:</p>
+                          <p className="text-sm text-[var(--glass-text-secondary)] whitespace-pre-wrap">{sub.content}</p>
                         </div>
                       )}
 
+                      {/* Submission file with preview */}
+                      {sub.fileUrl && (
+                        <div className="p-3 rounded-lg bg-[var(--glass-input-bg)] border border-[var(--glass-border)]">
+                          <p className="text-xs text-[var(--glass-text-muted)] mb-2 font-medium">File Terlampir:</p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <a href={sub.fileUrl} download className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1 hover:underline truncate">
+                                <Download className="w-3 h-3 shrink-0" /> {sub.fileUrl.split('/').pop()}
+                              </a>
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${getFileTypeBadge(sub.fileUrl).bg} ${getFileTypeBadge(sub.fileUrl).color}`}>
+                                {getFileTypeBadge(sub.fileUrl).label}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => openPreview(sub.fileUrl)}
+                              className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white hover:opacity-90 transition-opacity shrink-0 shadow-sm"
+                            >
+                              <Eye className="w-3 h-3" /> Lihat File
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Grading section */}
                       {sub.status !== 'graded' && (
-                        <div className="flex items-center gap-2 pt-2">
+                        <div className="flex items-center gap-2 pt-2 border-t border-[var(--glass-border)]">
                           <input
                             type="number"
                             placeholder="Nilai"
@@ -612,7 +665,7 @@ export default function AssignmentDetailPage() {
                         </div>
                       )}
                       {sub.status === 'graded' && (
-                        <div className="flex items-center gap-2 text-sm">
+                        <div className="flex items-center gap-2 text-sm pt-2 border-t border-[var(--glass-border)]">
                           <Star className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                           <span className="text-emerald-600 dark:text-emerald-400 font-medium">{Number.isFinite(sub.grade) ? Math.round(sub.grade) : 0}/{assignment?.points}</span>
                           {sub.feedback && <span className="text-[var(--glass-text-muted)] text-xs">— {sub.feedback}</span>}
@@ -672,7 +725,11 @@ export default function AssignmentDetailPage() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-[var(--glass-text-secondary)]">Kelas</span>
-                <span className="text-[var(--glass-text-secondary)]">{assignment?.class?.name || '-'}</span>
+                <span className="text-[var(--glass-text-secondary)]">
+                  {assignment?.class?.grade && assignment?.class?.direction 
+                    ? `${assignment.class.grade}-${assignment.class.direction} ` 
+                    : ''}{assignment?.class?.name || '-'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[var(--glass-text-secondary)]">Dibuat oleh</span>
@@ -713,6 +770,102 @@ export default function AssignmentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* File Preview Modal */}
+      <AnimatePresence>
+        {previewFile && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => setPreviewFile(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="glass-card max-w-4xl w-full max-h-[90vh] overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-[var(--glass-border)]">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Eye className="w-5 h-5 text-[var(--glass-text-secondary)] shrink-0" />
+                  <h3 className="text-sm font-semibold text-[var(--glass-text)] truncate">{previewFile.name}</h3>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${getFileTypeBadge(previewFile.url).bg} ${getFileTypeBadge(previewFile.url).color}`}>
+                    {previewFile.type.toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={previewFile.url}
+                    download
+                    className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white hover:opacity-90 transition-opacity"
+                  >
+                    <Download className="w-3 h-3" /> Unduh
+                  </a>
+                  <button
+                    onClick={() => setPreviewFile(null)}
+                    className="p-1.5 rounded-lg hover:bg-[var(--glass-hover-bg)] text-[var(--glass-text-muted)] hover:text-[var(--glass-text)] transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-4 flex items-center justify-center overflow-auto max-h-[calc(90vh-64px)]">
+                {previewFile.type === 'image' && (
+                  <img
+                    src={previewFile.url}
+                    alt={previewFile.name}
+                    className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                  />
+                )}
+                {previewFile.type === 'video' && (
+                  <video
+                    src={previewFile.url}
+                    controls
+                    className="max-w-full max-h-[70vh] rounded-lg"
+                  >
+                    Browser Anda tidak mendukung pemutar video.
+                  </video>
+                )}
+                {previewFile.type === 'audio' && (
+                  <div className="p-8 text-center">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4">
+                      <Play className="w-8 h-8 text-white ml-1" />
+                    </div>
+                    <p className="text-sm text-[var(--glass-text)] font-medium mb-4">{previewFile.name}</p>
+                    <audio src={previewFile.url} controls className="w-full max-w-md" />
+                  </div>
+                )}
+                {previewFile.type === 'pdf' && (
+                  <iframe
+                    src={previewFile.url}
+                    className="w-full h-[70vh] rounded-lg border border-[var(--glass-border)]"
+                    title="PDF Preview"
+                  />
+                )}
+                {previewFile.type === 'other' && (
+                  <div className="py-12 text-center">
+                    <div className="w-20 h-20 rounded-2xl bg-[var(--glass-input-bg)] flex items-center justify-center mx-auto mb-4">
+                      <File className="w-10 h-10 text-[var(--glass-text-muted)]" />
+                    </div>
+                    <p className="text-sm text-[var(--glass-text)] font-medium mb-1">{previewFile.name}</p>
+                    <p className="text-xs text-[var(--glass-text-muted)] mb-4">Preview tidak tersedia untuk tipe file ini</p>
+                    <a
+                      href={previewFile.url}
+                      download
+                      className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white hover:opacity-90 transition-opacity"
+                    >
+                      <Download className="w-4 h-4" /> Unduh File
+                    </a>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -1,8 +1,8 @@
 # SMKTTH Classroom LMS — Worklog
 
 ## Project Status
-**Status**: ✅ Stable — Comprehensive feature set, polished UI, export capabilities, mobile responsive
-**Version**: v9.0 — Full LMS with Auth, Features, UI Enhancements, Export, Mobile Nav
+**Status**: ✅ Stable — All user-requested features implemented, enhanced class management, file preview
+**Version**: v10.0 — Full LMS with Enhanced Class Management, File Preview, Exit Class
 **Stack**: Next.js 16 + React 19 + TypeScript + Prisma/SQLite + Tailwind CSS 4 + shadcn/ui + Zustand + Framer Motion
 **URL**: http://localhost:3000 (Preview Panel → "Open in New Tab")
 
@@ -1670,3 +1670,107 @@ Stage Summary:
 4. Add more attendance features (bulk actions, weekly reports)
 5. Add system health dashboard improvements
 6. Performance optimization for large datasets
+---
+Task ID: 15
+Agent: Main Agent
+Task: Implement 5 user-requested features: remove registration, enhance class creation, fix assignment files, add exit class, remove analytics
+
+Work Log:
+
+### Feature 1: Remove Registration Page
+- **Files Modified**: `src/lib/store.ts`, `src/components/AppLayout.tsx`, `src/components/pages/LoginPage.tsx`
+- Removed `'register'` from `PageName` type in store
+- Removed `RegisterPage` import and usage from AppLayout
+- Removed "Belum punya akun? Daftar sekarang" link from LoginPage
+- Registration now admin-only via User Management page
+- Register API route still exists for admin user creation
+
+### Feature 2: Enhanced Class Creation
+- **Files Modified**: `prisma/schema.prisma`, `src/app/api/classes/route.ts`, `src/components/pages/ClassesPage.tsx`, `src/components/pages/ClassDetailPage.tsx`, `src/app/api/assignments/route.ts`
+- Added `grade` (Int, default 10) and `direction` (String, default "RPL") fields to Class model in Prisma schema
+- Ran `bun run db:push` to apply schema changes
+- Updated classes POST API to accept `code` (custom class code), `grade`, and `direction`
+- Custom code validation: returns error if custom code already exists, auto-generates if left empty
+- Enhanced ClassesPage create dialog with:
+  - Grade selector (10/11/12) with gradient active state buttons
+  - Direction selector (RPL/TKJ/MM/AVI/EI) with gradient active state buttons
+  - Subject dropdown (fetched from `/api/subjects`)
+  - Custom class code input with monospace font
+  - Wider dialog (max-w-lg) with scrollable content
+- Added grade/direction badge overlay on class cards (gradient pill badge)
+- Updated ClassDetailPage hero to show "Kelas {grade}-{direction}" badge
+- Updated assignments API to include `grade` and `direction` in class select
+- Updated assignment sidebar info to show grade/direction with class name
+
+### Feature 3: Fix Assignment Assessment Page - File Viewing & Layout
+- **Files Modified**: `src/components/pages/AssignmentDetailPage.tsx`
+- Added full file preview modal with support for:
+  - Images: inline `<img>` display with max-height constraint
+  - Videos: `<video>` element with native controls
+  - Audio: styled player with Play icon and `<audio>` controls
+  - PDFs: `<iframe>` embed for in-browser viewing
+  - Other files: download prompt with file icon
+- Added `getFileTypeFromUrl()` helper to determine file type from URL extension
+- Added `openPreview()` function to open the file preview modal
+- Updated both student and guru submission file displays:
+  - Student view: "Lihat" button with Eye icon
+  - Guru view: "Lihat File" gradient button
+- Fixed layout: submission content now displayed in a styled card with "Jawaban:" label
+- Fixed submission file display: shown in a bordered card with "File Terlampir:" label
+- Increased max-height from 96 to 600px for submission list scrolling
+- Added user email display in guru submission cards
+- Added border-t separators between content/file/grading sections
+
+### Feature 4: Add Exit/Leave Class Feature
+- **Files Created**: `src/app/api/classes/[id]/leave/route.ts`
+- **Files Modified**: `src/components/pages/ClassDetailPage.tsx`
+- Created POST `/api/classes/{id}/leave` endpoint:
+  - Validates user is authenticated and a member of the class
+  - Prevents class creator from leaving their own class
+  - Deletes the ClassUser record on success
+- Added "Keluar dari Kelas" button in ClassDetailPage hero header
+  - Only shown for non-class-owners (students and non-owner teachers)
+  - Confirmation flow: "Keluar dari kelas ini?" → "Ya, Keluar" / "Batal"
+  - On success: shows toast and navigates back to classes page
+- Added `LogOut` icon import and `confirmLeave` state
+
+### Feature 5: Remove Analytics from Teacher/Admin Sidebar
+- **Files Modified**: `src/components/AppLayout.tsx`
+- Changed `progress-analytics` nav item from showing for all roles to only `siswa`
+- Removed `guru: 'Analitik'` and `admin: 'Analitik'` roleLabels
+- Analytics page still accessible via URL for students
+
+Stage Summary:
+- All 5 user-requested features implemented successfully
+- Zero lint errors, dev server running cleanly
+- Registration removed from public access (admin-only via User Management)
+- Class creation now supports grade (10/11/12), direction (RPL/TKJ/MM/AVI/EI), custom code, and subject
+- Assignment file viewing fully functional with preview modal for images, videos, audio, PDFs, and downloads
+- Exit class feature added with API endpoint and confirmation dialog
+- Analytics page hidden from teacher/admin sidebar (student-only)
+
+## Current Project Status Assessment
+**Status**: ✅ Stable — All 5 user-requested features implemented
+**Version**: v10.0
+
+## Completed This Round
+1. ✅ Removed registration page (admin-only user creation)
+2. ✅ Enhanced class creation with grade, direction, custom code, subject selector
+3. ✅ Fixed assignment assessment page: file preview modal + layout improvements
+4. ✅ Added exit/leave class feature with API and confirmation dialog
+5. ✅ Removed analytics from teacher/admin sidebar
+
+## Unresolved Issues / Risks
+1. File upload only saves to public/uploads (no cloud storage)
+2. No real-time WebSocket notifications (polling every 30s instead)
+3. No rate limiting on API endpoints
+4. Discussion thread creation is frontend-only (no backend persistence)
+5. Existing database classes have default grade=10 and direction="RPL" (not real values)
+
+### Priority Recommendations for Next Phase
+1. Add bulk user import (CSV upload for admin)
+2. Add more class management features (edit class, archive class)
+3. Add discussion thread persistence (backend API)
+4. Add assignment file download tracking
+5. Add student progress analytics improvements
+6. Add more SMK TTH specific features (school calendar, schedule integration)

@@ -4,7 +4,6 @@ import { create } from 'zustand'
 
 export type PageName =
   | 'login'
-  | 'register'
   | 'dashboard'
   | 'classes'
   | 'class-detail'

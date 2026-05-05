@@ -40,6 +40,8 @@ model Class {
   name        String
   description String?
   code        String   @unique
+  grade       Int      @default(10) // 10, 11, 12
+  direction   String   @default("RPL") // RPL, TKJ, MM, etc.
   subjectId   String?
   createdBy   String
   createdAt   DateTime @default(now())

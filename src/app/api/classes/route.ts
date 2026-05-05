@@ -85,17 +85,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Hanya guru yang bisa membuat kelas' }, { status: 403 })
     }
 
-    const { name, description, subjectId } = await request.json()
+    const { name, description, subjectId, code: customCode, grade, direction } = await request.json()
 
     if (!name) {
       return NextResponse.json({ error: 'Nama kelas wajib diisi' }, { status: 400 })
     }
 
-    // Generate random code
-    let code = Math.random().toString(36).substring(2, 8).toUpperCase()
+    // Use custom code if provided, otherwise generate random code
+    let code = customCode?.trim()?.toUpperCase() || Math.random().toString(36).substring(2, 8).toUpperCase()
+    
     // Ensure code is unique
-    const existingClass = await db.class.findUnique({ where: { code } })
-    if (existingClass) {
+    const existingCode = await db.class.findUnique({ where: { code } })
+    if (existingCode) {
+      if (customCode) {
+        return NextResponse.json({ error: 'Kode kelas sudah digunakan, gunakan kode lain' }, { status: 400 })
+      }
       code = Math.random().toString(36).substring(2, 8).toUpperCase()
     }
 
@@ -104,6 +108,8 @@ export async function POST(request: NextRequest) {
         name,
         description: description || null,
         code,
+        grade: grade || 10,
+        direction: direction || 'RPL',
         subjectId: subjectId || null,
         createdBy: user.id,
       },

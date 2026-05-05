@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       const assignment = await db.assignment.findUnique({
         where: { id },
         include: {
-          class: { select: { name: true } },
+          class: { select: { name: true, grade: true, direction: true } },
           subject: true,
           creator: { select: { name: true } },
         },
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const assignments = await db.assignment.findMany({
       where,
       include: {
-        class: { select: { name: true } },
+        class: { select: { name: true, grade: true, direction: true } },
         subject: true,
         creator: { select: { name: true } },
       },
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         createdBy: user.id,
       },
       include: {
-        class: { select: { name: true } },
+        class: { select: { name: true, grade: true, direction: true } },
         subject: true,
         creator: { select: { name: true } },
       },

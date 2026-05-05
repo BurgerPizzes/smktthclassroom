@@ -25,6 +25,8 @@ interface ClassItem {
   name: string
   description?: string
   code: string
+  grade?: number
+  direction?: string
   subject?: { name: string; code?: string }
   creator: { name: string }
   classUsers?: ClassUser[]
@@ -113,7 +115,8 @@ export default function ClassesPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [showJoin, setShowJoin] = useState(false)
   const [joinCode, setJoinCode] = useState('')
-  const [newClass, setNewClass] = useState({ name: '', description: '', subjectId: '' })
+  const [newClass, setNewClass] = useState({ name: '', description: '', subjectId: '', code: '', grade: 10, direction: 'RPL' })
+  const [subjects, setSubjects] = useState<Array<{id: string; name: string; code?: string}>>([])
   const [quickJoinCode, setQuickJoinCode] = useState('')
 
   useEffect(() => {
@@ -131,6 +134,22 @@ export default function ClassesPage() {
       }
     }
     fetchClasses()
+  }, [])
+
+  // Fetch subjects for class creation
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const res = await fetch('/api/subjects')
+        if (res.ok) {
+          const data = await res.json()
+          setSubjects(data.subjects || [])
+        }
+      } catch {
+        // silently fail
+      }
+    }
+    fetchSubjects()
   }, [])
 
   const handleCreate = useCallback(async () => {
@@ -151,7 +170,7 @@ export default function ClassesPage() {
       }
       setClasses((prev) => [data, ...prev])
       setShowCreate(false)
-      setNewClass({ name: '', description: '', subjectId: '' })
+      setNewClass({ name: '', description: '', subjectId: '', code: '', grade: 10, direction: 'RPL' })
       toast.success('Kelas berhasil dibuat!')
     } catch {
       toast.error('Terjadi kesalahan')
@@ -326,6 +345,11 @@ export default function ClassesPage() {
                   <div className="absolute top-3 right-3 bg-[var(--chip-bg)] backdrop-blur-sm rounded-lg px-2.5 py-1 text-xs text-[var(--glass-text-secondary)] font-mono font-medium z-10">
                     {cls.code}
                   </div>
+                  {cls.grade && cls.direction && (
+                    <div className="absolute top-3 left-3 bg-gradient-to-r from-[#667eea] to-[#764ba2] backdrop-blur-sm rounded-lg px-2.5 py-1 text-xs text-white font-semibold z-10 shadow-md">
+                      {cls.grade}-{cls.direction}
+                    </div>
+                  )}
                   {cls.subject && (
                     <div className="absolute bottom-3 left-3 text-xs text-[var(--glass-text-muted)] font-medium bg-[var(--chip-bg)] backdrop-blur-sm rounded-md px-2 py-0.5 z-10">
                       {cls.subject.name}
@@ -423,18 +447,88 @@ export default function ClassesPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="gradient-border w-full max-w-md"
+              className="gradient-border w-full max-w-lg"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="glass-card p-6 space-y-4">
+              <div className="glass-card p-6 space-y-4 max-h-[85vh] overflow-y-auto custom-scrollbar">
                 <h2 className="text-lg font-semibold text-[var(--glass-text)]">Buat Kelas Baru</h2>
+                
                 <input
                   type="text"
-                  placeholder="Nama Kelas"
+                  placeholder="Nama Kelas (contoh: XII-RPL-1)"
                   value={newClass.name}
                   onChange={(e) => setNewClass({ ...newClass, name: e.target.value })}
                   className="glass-input"
                 />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-[var(--glass-text-muted)] mb-1.5 block">Kelas (Tingkat)</label>
+                    <div className="flex gap-1.5">
+                      {[10, 11, 12].map((g) => (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => setNewClass({ ...newClass, grade: g })}
+                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+                            newClass.grade === g
+                              ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white shadow-md'
+                              : 'glass-btn text-[var(--glass-text-secondary)]'
+                          }`}
+                        >
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-[var(--glass-text-muted)] mb-1.5 block">Jurusan / Arah</label>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {['RPL', 'TKJ', 'MM', 'AVI', 'EI'].map((d) => (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => setNewClass({ ...newClass, direction: d })}
+                          className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                            newClass.direction === d
+                              ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white shadow-md'
+                              : 'glass-btn text-[var(--glass-text-secondary)]'
+                          }`}
+                        >
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs text-[var(--glass-text-muted)] mb-1.5 block">Mata Pelajaran</label>
+                  <select
+                    value={newClass.subjectId}
+                    onChange={(e) => setNewClass({ ...newClass, subjectId: e.target.value })}
+                    className="glass-input"
+                  >
+                    <option value="">Pilih Mata Pelajaran (opsional)</option>
+                    {subjects.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-[var(--glass-text-muted)] mb-1.5 block">Kode Kelas</label>
+                  <input
+                    type="text"
+                    placeholder="Kode kelas kustom (contoh: XII-RPL1) atau kosongkan untuk otomatis"
+                    value={newClass.code}
+                    onChange={(e) => setNewClass({ ...newClass, code: e.target.value.toUpperCase() })}
+                    className="glass-input font-mono tracking-wider"
+                    maxLength={12}
+                  />
+                  <p className="text-[10px] text-[var(--glass-text-muted)] mt-1">Biarkan kosong untuk kode otomatis</p>
+                </div>
+
                 <textarea
                   placeholder="Deskripsi (opsional)"
                   value={newClass.description}
