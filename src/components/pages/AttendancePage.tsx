@@ -521,7 +521,7 @@ export default function AttendancePage() {
 
       {/* Attendance Summary Visualization */}
       {attendanceSummary && selectedClassId && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {/* Attendance Rate - Circular Progress */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -686,9 +686,9 @@ export default function AttendancePage() {
         </div>
       )}
 
-      {/* Class selector & Date picker */}
-      <div className="glass-card p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="flex items-center gap-2 flex-1">
+      {/* Class selector & Date picker row */}
+      <div className="glass-card p-5 md:p-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+        <div className="flex items-center gap-2 sm:flex-1">
           <Calendar className="w-5 h-5 text-[var(--glass-text-secondary)]" />
           <input
             type="date"
@@ -697,8 +697,8 @@ export default function AttendancePage() {
             className="glass-input max-w-xs"
           />
         </div>
-        <div className="flex items-center gap-2 flex-1">
-          <span className="text-sm text-[var(--glass-text-secondary)]">Kelas:</span>
+        <div className="flex items-center gap-2 sm:flex-1">
+          <span className="text-sm text-[var(--glass-text-secondary)] whitespace-nowrap">Kelas:</span>
           <select
             value={selectedClassId}
             onChange={(e) => setSelectedClassId(e.target.value)}
@@ -729,7 +729,7 @@ export default function AttendancePage() {
               }
             } catch { toast.error('Terjadi kesalahan') }
           }}
-          className="glass-btn flex items-center gap-2 text-sm"
+          className="btn-glass flex items-center gap-2 text-sm shrink-0"
         >
           <Download className="w-4 h-4" /> Export CSV
         </button>
@@ -935,34 +935,34 @@ export default function AttendancePage() {
         </div>
         {selectedClassId && students.length > 0 ? (
           <>
-            <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+            <div className="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar">
               {students.map((s) => {
                 const currentStatus = attendanceForm[s.id] || 'hadir'
                 return (
-                  <div key={s.id} className="interactive-card p-3 flex items-center justify-between">
+                  <div key={s.id} className="interactive-card p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
                         {s.name.charAt(0)}
                       </div>
-                      <div>
-                        <p className="text-sm text-[var(--glass-text)] font-medium">{s.name}</p>
-                        <p className="text-xs text-[var(--glass-text-muted)]">{s.email}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm text-[var(--glass-text)] font-medium truncate">{s.name}</p>
+                        <p className="text-xs text-[var(--glass-text-muted)] truncate">{s.email}</p>
                       </div>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1.5 shrink-0">
                       {(['hadir', 'terlambat', 'tidak'] as const).map((status) => {
                         const isActive = currentStatus === status
                         const activeStyles: Record<string, string> = {
-                          hadir: 'bg-emerald-500 text-white border-emerald-500',
-                          terlambat: 'bg-amber-500 text-white border-amber-500',
-                          tidak: 'bg-red-500 text-white border-red-500',
+                          hadir: 'bg-emerald-500 text-white border-emerald-500 shadow-sm shadow-emerald-500/25',
+                          terlambat: 'bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-500/25',
+                          tidak: 'bg-red-500 text-white border-red-500 shadow-sm shadow-red-500/25',
                         }
                         const inactiveStyles = 'bg-transparent text-[var(--glass-text-muted)] border-[var(--glass-border)] hover:bg-[var(--icon-btn-hover-bg)]'
                         return (
                           <button
                             key={status}
                             onClick={() => setAttendanceForm({ ...attendanceForm, [s.id]: status })}
-                            className={`px-2 py-1 rounded-lg text-xs font-medium transition-all border ${
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border min-w-[80px] text-center ${
                               isActive ? activeStyles[status] : inactiveStyles
                             }`}
                           >
@@ -975,8 +975,8 @@ export default function AttendancePage() {
                 )
               })}
             </div>
-            <div className="pt-4">
-              <button onClick={handleMarkAttendance} className="btn-gradient flex items-center gap-2 text-sm">
+            <div className="pt-4 flex justify-end">
+              <button onClick={handleMarkAttendance} className="btn-gradient flex items-center gap-2 text-sm px-6 py-2.5">
                 <UserCheck className="w-4 h-4" /> Simpan Absensi
               </button>
             </div>

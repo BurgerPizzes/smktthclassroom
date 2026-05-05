@@ -202,16 +202,16 @@ export default function CalendarPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            className="glass-btn p-2 rounded-lg"
+            className="btn-glass p-2 rounded-lg"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-[var(--glass-text)] font-medium min-w-[140px] text-center">
+          <span className="text-[var(--glass-text)] font-semibold min-w-[140px] text-center">
             {format(currentMonth, 'MMMM yyyy', { locale: localeId })}
           </span>
           <button
             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            className="glass-btn p-2 rounded-lg"
+            className="btn-glass p-2 rounded-lg"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -265,7 +265,7 @@ export default function CalendarPage() {
             {/* Day headers */}
             <div className="grid grid-cols-7 gap-1 mb-2">
               {dayNames.map((d) => (
-                <div key={d} className="text-center text-xs font-medium text-[var(--glass-text-muted)] py-2">
+                <div key={d} className="text-center text-xs font-semibold text-[var(--glass-text-secondary)] py-2">
                   {d}
                 </div>
               ))}
@@ -293,18 +293,18 @@ export default function CalendarPage() {
                 return (
                   <motion.button
                     key={key}
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.08 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setSelectedDate(day)}
                     className={`aspect-square rounded-xl p-1 flex flex-col items-center justify-center transition-all relative ${
                       isSelected
-                        ? 'bg-gradient-to-br from-[#667eea] to-[#764ba2] shadow-lg shadow-purple-500/20'
+                        ? 'bg-gradient-to-br from-[#667eea] to-[#764ba2] shadow-lg shadow-purple-500/20 ring-2 ring-purple-400/30'
                         : today
-                        ? 'bg-[var(--glass-hover-bg)] border border-[var(--glass-hover-border)] ring-1 ring-purple-500/20'
-                        : 'hover:bg-[var(--glass-hover-bg)]'
+                        ? 'bg-[var(--glass-hover-bg)] border-2 border-purple-500/30 ring-1 ring-purple-500/15'
+                        : 'hover:bg-[var(--glass-hover-bg)] hover:border hover:border-[var(--glass-hover-border)]'
                     }`}
                   >
-                    <span className={`text-xs font-medium ${
+                    <span className={`text-xs font-semibold ${
                       isSelected ? 'text-white' : today ? 'text-[var(--glass-text)]' : 'text-[var(--glass-text-secondary)]'
                     }`}>
                       {format(day, 'd')}
@@ -316,13 +316,13 @@ export default function CalendarPage() {
                           return (
                             <span
                               key={i}
-                              className={`w-1.5 h-1.5 rounded-full ${style.dot} ${hasUrgent && !isSelected ? 'countdown-urgent' : ''}`}
+                              className={`w-2 h-2 rounded-full ${style.dot} ${hasUrgent && !isSelected ? 'countdown-urgent' : ''}`}
                             />
                           )
                         })}
                         {/* Small colored type indicator dots alongside event dots */}
                         {dayAssignments.length > 3 && (
-                          <span className={`text-[6px] font-bold ${isSelected ? 'text-white/70' : 'text-[var(--glass-text-muted)]'}`}>
+                          <span className={`text-[7px] font-bold ${isSelected ? 'text-white/80' : 'text-[var(--glass-text-muted)]'}`}>
                             +{dayAssignments.length - 3}
                           </span>
                         )}
@@ -341,7 +341,7 @@ export default function CalendarPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="glass-card p-5"
+                className="glass-card p-5 md:p-6"
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-[var(--glass-text)] text-sm flex items-center gap-2">
@@ -396,12 +396,12 @@ export default function CalendarPage() {
         </div>
 
         {/* Sidebar - Upcoming Events */}
-        <div className="space-y-4">
-          <div className="glass-card p-5">
+        <div className="space-y-4 md:space-y-6">
+          <div className="glass-card p-5 md:p-6">
             <h3 className="font-semibold text-[var(--glass-text)] text-sm flex items-center gap-2 mb-4">
               <Timer className="w-4 h-4 text-amber-600 dark:text-amber-400" /> Mendatang
             </h3>
-            <div className="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+            <div className="space-y-2.5 max-h-[500px] overflow-y-auto custom-scrollbar">
               {upcomingAssignments.length > 0 ? (
                 upcomingAssignments.map((a) => {
                   const style = TYPE_STYLES[a.type] || DEFAULT_STYLE
@@ -454,7 +454,7 @@ export default function CalendarPage() {
           </div>
 
           {/* Stats mini card */}
-          <div className="glass-card p-5">
+          <div className="glass-card p-5 md:p-6">
             <h3 className="font-semibold text-[var(--glass-text)] text-sm mb-3">Ringkasan Bulan Ini</h3>
             <div className="space-y-2.5">
               {[

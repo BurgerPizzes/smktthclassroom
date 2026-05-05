@@ -191,18 +191,18 @@ export default function MySubmissionsPage() {
               } else { toast.error('Gagal mengekspor') }
             } catch { toast.error('Terjadi kesalahan') }
           }}
-          className="glass-btn flex items-center gap-2 text-sm shrink-0"
+          className="btn-glass flex items-center gap-2 text-sm shrink-0 font-semibold"
         >
           <Download className="w-4 h-4" /> Export
         </button>
       </div>
 
       {/* Summary Statistics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="stat-card"
+          className="stat-card p-4 md:p-5"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -219,7 +219,7 @@ export default function MySubmissionsPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="stat-card"
+          className="stat-card p-4 md:p-5"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -236,7 +236,7 @@ export default function MySubmissionsPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="stat-card"
+          className="stat-card p-4 md:p-5"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -267,7 +267,7 @@ export default function MySubmissionsPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="stat-card"
+          className="stat-card p-4 md:p-5"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -446,7 +446,7 @@ export default function MySubmissionsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: idx * 0.03 }}
-                className="interactive-card p-4"
+                className="interactive-card p-5 md:p-6"
                 onClick={() => setPage('assignment-detail', { id: sub.assignment.id })}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -517,12 +517,22 @@ export default function MySubmissionsPage() {
 
       {/* Empty State */}
       {filtered.length === 0 && !loading && (
-        <div className="empty-state py-16">
-          <FileText className="w-16 h-16 mb-4" />
-          <h3 className="text-lg font-medium text-[var(--glass-text-secondary)] mb-2">Tidak ada submission</h3>
-          <p className="text-[var(--glass-text-muted)] text-sm">
-            {search || statusFilter !== 'all' || classFilter !== 'all' ? 'Coba filter lain' : 'Mulai kumpulkan tugas dari kelas Anda'}
-          </p>
+        <div className="glass-card p-8 md:p-12">
+          <div className="empty-state py-8">
+            <FileText className="w-16 h-16 mb-4 text-[var(--glass-text-muted)]" />
+            <h3 className="text-lg font-semibold text-[var(--glass-text)] mb-2">Tidak ada submission</h3>
+            <p className="text-[var(--glass-text-muted)] text-sm mb-4">
+              {search || statusFilter !== 'all' || classFilter !== 'all' ? 'Coba filter lain' : 'Mulai kumpulkan tugas dari kelas Anda'}
+            </p>
+            {(search || statusFilter !== 'all' || classFilter !== 'all') && (
+              <button
+                onClick={() => { setStatusFilter('all'); setClassFilter('all'); setSearch('') }}
+                className="btn-glass text-sm"
+              >
+                Reset Filter
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

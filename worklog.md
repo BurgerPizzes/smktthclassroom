@@ -1218,3 +1218,455 @@ Stage Summary:
 5. Add offline mode / PWA support
 6. Push latest code to GitHub
 7. Add end-to-end test automation
+
+---
+Task ID: 2
+Agent: UI Polish Agent — AppLayout & Global CSS
+Task: Tidy up UI/UX appearance of AppLayout component and global CSS for a polished, consistent, professional look
+
+Work Log:
+
+### 1. Sidebar Improvements (AppLayout.tsx)
+- **Active state indicator**: Changed left bar from `w-1 h-6` to `w-1.5 h-7` for more prominence
+- **Active icon background**: Added `w-7 h-7 rounded-lg` background circle with gradient (`from-[#667eea]/20 to-[#764ba2]/20`) for active nav items, replacing bare icon
+- **Active nav background**: Upgraded from `from-[#667eea]/20 to-[#764ba2]/20` text only to full gradient background with consistent text color
+- **Section dividers**: Added 3 nav sections with `sidebar-section-label` (Utama, Pembelajaran, Admin) and `sidebar-section-divider` between groups
+- **Vertical spacing**: Consistent `py-2` and `space-y-0.5` within sections for tighter, more regular spacing
+- **Font size**: Changed from `text-sm` to `text-[13px]` for more compact nav items
+- **Icon alignment**: Icons now wrapped in `w-7 h-7` flex container for perfect vertical alignment
+- **Close button**: Added rounded-lg and hover:bg styles to close button for consistency
+- **User section**: Avatar now shows user image if available, added `ring-2 ring-white/10`, role label now properly capitalized (Guru/Siswa/Admin), user row is clickable to navigate to profile, added hover:bg transition
+
+### 2. Top Navbar Improvements (AppLayout.tsx)
+- **Notification badge**: Increased from `w-4 h-4` to `min-w-[20px] h-5` with gradient background (`from-red-500 to-rose-500`) and `shadow-lg shadow-red-500/30`, font size increased to `text-[11px]`, supports 99+ overflow
+- **Bell icon**: Increased from `w-4 h-4` to `w-[18px] h-[18px]`, padding increased to `p-2.5`
+- **Profile avatar**: Increased from `w-6 h-6` to `w-8 h-8` with `ring-2 ring-white/10`, shows user image if available
+- **Profile dropdown**: Added user info header with name and email, increased spacing between menu items to `gap-3` and padding to `py-2.5`, dropdown width increased to `w-56`
+- **Theme toggle**: Sun icon now has `text-amber-400` color, Moon icon has `text-[var(--glass-text-secondary)]` for better visual feedback
+- **Gap consistency**: All navbar elements now use `gap-3` consistently
+
+### 3. Footer Improvements (AppLayout.tsx)
+- **Better contrast**: Changed from `text-[var(--glass-text-muted)]` to `text-[var(--glass-text-secondary)]` for more visible text
+- **Three-column layout**: Added school logo with GraduationCap icon, footer links (Tentang, Bantuan, Kebijakan Privasi), and tagline with heart icon
+- **Sticky footer**: Used `min-h-screen flex flex-col` wrapper + `mt-auto` on footer for proper sticky behavior
+- **Glass background**: Added `app-footer` class with backdrop blur and glass background
+- **Interactive links**: Links use `app-footer-link` class with hover color transition to purple
+
+### 4. Mobile Bottom Nav Improvements (AppLayout.tsx)
+- **Active state pill**: Using `mobile-nav-item` CSS class with `active` modifier showing background color and top gradient bar
+- **Icon size**: Increased from `w-5 h-5` to `w-6 h-6`
+- **Label styling**: Changed to `font-semibold` for better readability
+- **Active indicator**: Gradient top bar (`from-[#667eea] to-[#764ba2]`) via `::after` pseudo-element
+
+### 5. Global CSS — Button System (globals.css)
+- **`.btn-primary`**: Gradient background, white text, `px-5 py-2.5`, `rounded-xl`, hover scale/shadow, shimmer sweep `::before`, disabled state
+- **`.btn-secondary`**: Glass background with border, hover glow and scale, disabled state
+- **`.btn-ghost`**: Transparent background, hover background and text color change, active press feedback, disabled state
+
+### 6. Global CSS — Typography Hierarchy (globals.css)
+- **`.heading-1`**: 1.875rem, font-weight 800, line-height 1.2, letter-spacing -0.025em
+- **`.heading-2`**: 1.5rem, font-weight 700, line-height 1.25, letter-spacing -0.02em
+- **`.heading-3`**: 1.25rem, font-weight 600, line-height 1.3, letter-spacing -0.015em
+- **`.heading-4`**: 1.0625rem, font-weight 600, line-height 1.4, letter-spacing -0.01em
+- **`.section-title`**: 0.75rem, font-weight 700, uppercase, letter-spacing 0.08em, bottom border
+
+### 7. Global CSS — Card Design System (globals.css)
+- **`.content-card`**: Consistent `rounded-xl` (0.75rem), `p-5` (1.25rem), glass background, blur, border, shadow, hover effects
+
+### 8. Global CSS — Badge Sizing (globals.css)
+- **`.badge-sm`**: Compact badge (1px 6px padding, 0.625rem font)
+- **`.badge-md`**: Default badge (2px 10px padding, 0.75rem font)
+
+### 9. Global CSS — Additional Utilities (globals.css)
+- **`.sidebar-section-label`**: Uppercase section headers for sidebar nav groups
+- **`.sidebar-section-divider`**: Horizontal rule between sidebar sections
+- **`.mobile-nav-item`**: Mobile bottom nav with active gradient top bar
+- **`.app-footer`**: Footer with glass background and blur
+- **`.app-footer-text`**: Consistent footer text color
+- **`.app-footer-link`**: Interactive footer links with hover effect
+
+### 10. Pre-existing Bug Fixes
+- Fixed DashboardPage.tsx line 453: Missing `}` in JSX expression (`)` → `)}`)
+- Fixed ClassesPage.tsx line 410: Missing `}` in JSX expression (`)` → `)}`)
+
+Stage Summary:
+- All 7 QA issues addressed in AppLayout.tsx (sidebar, navbar, footer, mobile nav)
+- 11 new CSS utility classes added to globals.css (button system, typography, cards, badges, layout helpers)
+- 2 pre-existing JSX syntax errors fixed (DashboardPage, ClassesPage)
+- Zero lint errors
+- Dev server running cleanly
+- Dark mode compatibility maintained through CSS custom properties
+- Glass/aurora design language preserved
+
+---
+Task ID: 3
+Agent: UI Polish Agent
+Task: Polish Dashboard & Classes pages UI/UX — fix QA-reported issues
+
+Work Log:
+
+### DashboardPage.tsx Fixes:
+1. **Stat Card Progress Bars**: Fixed always-100% progress bars. Added `max` values to each stat (Total Kelas max=10, Tugas Aktif max=20, Submissions Masuk max=totalAssignments*5, Tugas Selesai max=totalAssignments, Pengumuman max=10). Changed formula from `stat.value / Math.max(stat.value, 1)` to `stat.value / Math.max(stat.max, 1)`.
+2. **Welcome Banner Circles**: Replaced non-standard Tailwind classes `bg-white/5`, `bg-white/8`, `bg-white/10` with inline styles `style={{ background: 'rgba(255,255,255,0.05)' }}`, etc.
+3. **Quick Actions**: Increased grid gap from `gap-3` to `gap-4`. Increased button padding and gap in CSS (padding: 1rem → 1.125rem 0.75rem, gap: 8px → 10px).
+4. **Announcement/Assignment Items**: Changed `interactive-card p-3` to `p-4` for both announcement and assignment list items.
+5. **Activity Feed**: Increased avatar size from `w-8 h-8` to `w-9 h-9`. Changed item padding from `p-3` to `p-4`.
+6. **Motivational Quote Card**: Added gradient left border accent (`border-left: 4px solid` with `border-image: linear-gradient(180deg, #667eea, #764ba2, #f093fb) 1`). Adjusted quote position to account for border.
+
+### ClassesPage.tsx Fixes:
+1. **Card Padding**: Increased from `p-4` to `p-5`. Adjusted spacing: `mt-3` → `mt-4` for footer, `mt-1` → `mt-1.5` for description.
+2. **Member Avatars**: Increased avatar size from `w-6 h-6` to `w-7 h-7` with `text-[10px]` → `text-[11px]`. Extra count chip also `w-7 h-7`. Icon sizes from `w-3 h-3` to `w-3.5 h-3.5`. Avatar stack overlap increased from `-8px` to `-10px`.
+3. **Quick Join Section**: Redesigned with `flex-col sm:flex-row` layout, larger icon (`w-11 h-11`), `font-semibold` label, larger input/button (`py-2.5`, `px-5 py-2.5`), `btn-gradient` for join button, `whitespace-nowrap`. Padding increased to `p-5`.
+4. **Search Bar**: Added descriptive placeholder, `py-2.5` for consistent height, clear button (X) when search has content.
+5. **Empty State**: Enhanced with `motion.div` animation, illustration-like icon in gradient rounded box (`w-20 h-20 rounded-2xl`), `text-xl font-semibold` heading, responsive CTA buttons with proper padding.
+6. **Card Spacing**: Grid gap increased from `gap-4` to `gap-5`.
+7. **Subject Colors**: Ensured distinct colors — fisika now red/orange, biologi now teal/cyan, komputer now indigo/violet, seni now pink/fuchsia, tik now cyan/sky. Added musik entry.
+
+### globals.css Changes:
+1. **motivational-card**: Added `border-left: 4px solid` with gradient `border-image`. Adjusted `::before` left position.
+2. **quick-action-btn**: Increased gap to 10px, padding to 1.125rem 0.75rem.
+3. **avatar-stack**: Increased overlap to -10px, hover transform to `translateY(-3px) scale(1.15)`.
+
+Stage Summary:
+- All 13 QA issues fixed across Dashboard and Classes pages
+- Zero lint errors
+- Dev server running cleanly
+- Glass/aurora design language maintained
+- Dark mode compatibility preserved
+
+---
+Task ID: 4
+Agent: UI Polish Agent
+Task: Polish UI/UX across 6 pages — Attendance, Calendar, Resources, Submissions, Schedule, Discussions
+
+Work Log:
+
+### Page 1: AttendancePage.tsx
+- **Class selector & export alignment**: Changed row container from `p-4` to `p-5 md:p-6`, used `items-stretch sm:items-center` for better alignment, added `whitespace-nowrap` to "Kelas:" label, changed Export CSV from `glass-btn` to `btn-glass` with `shrink-0`
+- **Student list padding**: Increased spacing from `space-y-2` to `space-y-3`, changed card padding from `p-3` to `p-4 md:p-5`, added `flex-col sm:flex-row` responsive layout for each student row
+- **Status button consistency**: Increased padding from `px-2 py-1` to `px-3 py-1.5`, added `min-w-[80px] text-center`, added `shadow-sm shadow-{color}-500/25` for active states, increased gap from `gap-1` to `gap-1.5`
+- **Save button prominence**: Added `px-6 py-2.5` for larger sizing, added `flex justify-end` alignment
+- **Summary visualization spacing**: Changed grid gap from `gap-4` to `gap-4 md:gap-6`
+
+### Page 2: CalendarPage.tsx
+- **Calendar date hover/active states**: Increased `whileHover` scale to `1.08`, added `ring-2 ring-purple-400/30` to selected state, changed today state from `border` to `border-2 border-purple-500/30 ring-1 ring-purple-500/15`, added `hover:border hover:border-[var(--glass-hover-border)]` for regular dates, changed date font to `font-semibold`
+- **Event indicator dots**: Increased dot size from `w-1.5 h-1.5` to `w-2 h-2`, increased overflow count text from `text-[6px]` to `text-[7px]`
+- **Sidebar card styling**: Changed padding to `p-5 md:p-6`, increased event spacing from `space-y-2` to `space-y-2.5`, added `md:space-y-6` between sidebar sections
+- **Selected date details padding**: Changed from `p-5` to `p-5 md:p-6`
+- **Month navigation buttons**: Changed from `glass-btn` to `btn-glass`, changed month label from `font-medium` to `font-semibold`, day headers from `font-medium` to `font-semibold`
+- **Stats mini card**: Changed padding to `p-5 md:p-6`
+
+### Page 3: LearningResourcesPage.tsx
+- **Class filter**: Added `classFilter` state and `classFilterOptions` useMemo, added class filter row below type filters using `category-chip` components, class filters reset type filter when selected and vice versa
+- **Sort options**: Added `sortBy` state (`'newest' | 'oldest' | 'name'`), added sort dropdown next to search, integrated sorting into `filtered` useMemo
+- **Search & filter layout**: Wrapped in `glass-card p-4 md:p-5` container with `space-y-3`, added search clear button (X icon), replaced inline filter buttons with `category-chip` components for consistency
+- **Resource card padding**: Grid cards changed from `p-4` to `p-5 md:p-6`, icon badges from `w-12 h-12` to `w-14 h-14`, item gap from `gap-3` to `gap-4`; List cards changed from `p-3` to `p-4`, icons from `w-10 h-10` to `w-12 h-12`, gap from `gap-3` to `gap-4`
+- **Added BookOpen icon import** for class filter label
+
+### Page 4: MySubmissionsPage.tsx
+- **Summary stats styling**: Changed grid gap from `gap-3` to `gap-4 md:gap-6`, added `p-4 md:p-5` to each stat-card for consistent padding
+- **Submission cards**: Changed padding from `p-4` to `p-5 md:p-6`
+- **Export button prominence**: Changed from `glass-btn` to `btn-glass` with `font-semibold`
+- **Empty state**: Wrapped in `glass-card p-8 md:p-12` for visual treatment, changed title to `font-semibold`, added "Reset Filter" CTA button when filters are active
+
+### Page 5: SchedulePage.tsx
+- **Subject name font**: Changed from `font-semibold` to `font-bold` for better visual distinction
+- **Time label alignment**: Changed "Waktu" header from `font-medium` to `font-semibold` with `text-[var(--glass-text-secondary)]`, added next time slot label (`nextTime`) below current time in smaller text
+- **"Tambah Jadwal" button**: Changed from `px-4 py-2` to `px-5 py-2.5 font-semibold` for more prominent primary styling
+
+### Page 6: DiscussionsPage.tsx
+- **Thread card padding**: Changed outer card from no padding to `p-5 md:p-6`, removed inner `p-5` padding from header div (avoiding double padding)
+- **Create thread button prominence**: Added `font-semibold` to "Diskusi Baru" button
+- **Search bar consistency**: Already had `glass-input pl-10` class and X clear button — no changes needed (confirmed consistent)
+
+Stage Summary:
+- All 6 pages polished with consistent UI patterns
+- Zero lint errors
+- Dev server running cleanly
+- All changes maintain glass/aurora design language
+- Dark mode compatibility preserved
+- Responsive design improved (mobile-first with md: breakpoints)
+- Category chips used consistently across pages (Resources, Submissions, Discussions)
+- All primary action buttons now use `btn-gradient` with `font-semibold`
+- All secondary buttons use `btn-glass` styling
+- Card padding standardized to `p-5 md:p-6` across all content cards
+
+---
+Task ID: 5-b
+Agent: Feature Development Agent
+Task: Student Progress Analytics & Notification Enhancements
+
+Work Log:
+
+### Task 1: Enhanced ProgressAnalyticsPage — Ringkasan (Summary) Tab
+- **File**: `src/components/pages/ProgressAnalyticsPage.tsx` (REWRITTEN)
+- **Changes**:
+  - Replaced 4-stat overview grid with 5-stat grid: Penyelesaian, Rata-rata Nilai, Kehadiran, Jam Belajar, Peringkat
+  - Each stat card now has a mini progress bar at the bottom showing the percentage
+  - Added `studyHoursEstimate` (based on submissions × 1.5 hours)
+  - Added `attendanceRate` from attendance API data
+  - New icons: GraduationCap (for Rata-rata Nilai), Timer (for Jam Belajar), ClockIcon (for Kehadiran)
+  - Stats are responsive: 2 columns on mobile, 3 on sm, 5 on lg
+
+### Task 2: Enhanced ProgressAnalyticsPage — Mata Pelajaran (Subjects) Tab
+- **Changes**:
+  - Added `SUBJECT_COLORS` array with 6 color schemes (purple, emerald, amber, cyan, rose, blue) — each with bg gradient, border-l color, and accent text color
+  - Subject cards now have colored left border (`border-l-4`) using the color scheme
+  - BookOpen icon uses the subject's accent color
+  - Added "Tenggat Mendatang" (Upcoming Deadlines) section at the bottom of each subject card
+  - Deadlines show countdown text with urgency colors (red for ≤1 day, amber for ≤3 days) and `countdown-urgent` pulsing animation
+  - Upcoming deadlines sorted by due date, max 3 shown per subject
+  - Analytics API now returns `upcomingDeadlines` for each subject
+
+### Task 3: Enhanced ProgressAnalyticsPage — Tren (Trends) Tab (NEW)
+- **Changes**:
+  - Replaced old "Kehadiran" tab with new "Tren" tab
+  - **Submission Activity SVG Bar Chart**: 30-day activity chart showing submission counts per day
+    - Y-axis grid lines with count labels
+    - Bars colored differently: today=#667eea, weekend=lighter, weekday=medium
+    - Date labels every 5 days
+    - "Hari ini" indicator on the rightmost bar
+    - Legend showing color meanings
+    - Animated bars with staggered entrance
+  - **Grade Improvement SVG Line Chart**: 8-week trend with area fill
+    - Y-axis grid lines at 0, 25, 50, 75, 100
+    - Animated line path with `pathLength` animation
+    - Gradient area fill under the line
+    - Color-coded dots (green ≥75, amber 50-74, red <50) with count labels
+    - Week labels (W1-W8)
+    - Legend showing grade color ranges
+  - **Attendance Summary**: Moved from old tab to trends, includes circular progress and breakdown bars
+  - Analytics API now returns `submissionTrend` (30 days) and `gradeTrend` (8 weeks)
+
+### Task 4: Enhanced ProgressAnalyticsPage — Peringatan (Alerts) Tab (NEW)
+- **Changes**:
+  - Replaced old "Target" tab with new "Peringatan" tab
+  - **Alert Summary**: 4 mini stat cards at top showing count per type (Terlambat, Nilai Rendah, Kehadiran, Tengkat) with colored gradient backgrounds
+  - **Alert List**: Each alert rendered as a bordered card with:
+    - Type-specific icon in colored rounded box (AlertTriangle for overdue, Star for low grade, ClockIcon for attendance, Bell for upcoming)
+    - Severity dot (red=high, amber=medium, blue=low)
+    - Title, description, and class name
+    - "Lihat" action button for alerts with links (navigates to assignment-detail or relevant page)
+  - **Alert Types**:
+    - Overdue assignments (not submitted, past due date) — severity: high
+    - Low grades (<60% of points) — severity: high if <40%, medium otherwise
+    - Missing attendance (insufficient records in last 2 weeks) — severity: low
+    - Upcoming deadlines (≤3 days, not submitted) — severity varies by urgency
+  - **Goals Section**: Retained from old layout, shown below alerts with progress bars and "Tercapai!" badges
+  - **Empty State**: Shows "Semua Aman!" with CheckCircle2 icon when no alerts
+  - Tab badge shows alert count in gradient pill
+  - Analytics API now returns `alerts` array with computed alert data
+
+### Task 5: Updated Analytics API Route
+- **File**: `src/app/api/analytics/route.ts` (ENHANCED)
+- **Changes**:
+  - Added `studyHoursEstimate` to overview (totalSubmissions × 1.5)
+  - Added `attendanceRate` to overview (from attendance summary)
+  - Added `upcomingDeadlines` to each subject in `subjectPerformance` (unsubmitted future-due assignments, max 3, sorted by due date)
+  - Added `classId` to each subject for potential navigation
+  - Added `submissionTrend`: 30-day daily submission counts with date strings
+  - Added `gradeTrend`: 8-week weekly average grades with count and week label
+  - Added `alerts` array computing:
+    - Overdue assignments (no submission + past due date)
+    - Low grade alerts (graded submissions with grade < 60% of points)
+    - Missing attendance alerts (if recent attendance records < expected in 2 weeks)
+    - Upcoming deadline alerts (unsubmitted assignments due within 3 days)
+  - All alerts sorted by severity (high → medium → low)
+
+### Task 6: Enhanced NotificationsPage — Read/Unread Filter & Distinctive Icons
+- **File**: `src/components/pages/NotificationsPage.tsx` (ENHANCED)
+- **Changes**:
+  - **Read/Unread Filter**: Added second row of filter buttons below category tabs
+    - Three options: Semua (all), Belum Dibaca (unread), Dibaca (read)
+    - Gradient active state for selected filter
+    - Unread count badge shown next to "Belum Dibaca" option
+    - Uses `useMemo` for efficient filtering by both category and read status
+    - Empty state messages are context-aware (different text for unread vs read filter)
+  - **More Distinctive Notification Type Icons**:
+    - Expanded TYPE_CONFIG with 12 notification types (up from 6)
+    - New types: `grade` (GraduationCap), `attendance` (Calendar), `class` (BookOpen), `submission` (FileText), `security` (Shield), `social` (UserPlus), `comment` (MessageSquare)
+    - Replaced `assignment` icon from FileText to ClipboardCheck for better distinction
+    - `detectNotificationType()` function: smart type detection from title/message keywords (nilai→grade, absensi→attendance, kelas→class, etc.)
+    - Falls back gracefully to existing notification.type if set
+  - **Larger icon containers**: Increased from w-10 h-10 to w-11 h-11 with rounded-xl
+  - **"Tandai Semua Dibaca" button**: Already present, now more prominent with full label text
+  - **Optimized filtering**: Uses `useMemo` for filterCounts, unreadFilterCounts, and filteredNotifications
+
+Stage Summary:
+- All 6 tasks completed successfully
+- Zero lint errors
+- Dev server running cleanly
+- ProgressAnalyticsPage now has 4 comprehensive tabs: Ringkasan, Mata Pelajaran, Tren, Peringatan
+- Analytics API returns trend data, alerts, and upcoming deadlines
+- NotificationsPage now has read/unread filter and 12 distinctive notification type icons
+- All SVG charts use inline SVG (no recharts dependency)
+- Design language consistent with glass/aurora theme
+
+---
+Task ID: 5-a
+Agent: Feature Development Agent
+Task: Discussion Thread Persistence & Enhancements
+
+Work Log:
+
+### Task 1: Create Discussion Database Schema
+- **File**: `prisma/schema.prisma` (MODIFIED)
+- Added `Discussion` model:
+  - id: String (cuid), title, content, category (pengumuman/tanya-jawab/diskusi-umum/tips-trik), priority (normal/high), classId (optional), createdBy, createdAt, updatedAt
+  - Relations: creator (User), class (Class), replies (DiscussionReply[]), likes (DiscussionLike[])
+- Added `DiscussionReply` model:
+  - id: String (cuid), content, discussionId, createdBy, createdAt
+  - Relations: discussion (Discussion), creator (User)
+- Added `DiscussionLike` model:
+  - id: String (cuid), discussionId, userId, createdAt
+  - Unique constraint on [discussionId, userId]
+  - Relations: discussion (Discussion), user (User)
+- Added relations to User model: discussions, discussionReplies, discussionLikes
+- Added relation to Class model: discussions
+- Ran `bun run db:push` to apply schema changes
+
+### Task 2: Create API Endpoints
+- **File**: `src/app/api/discussions/route.ts` (NEW)
+  - `GET /api/discussions` — List discussions with pagination, category filter, search
+    - Includes reply count and like count (computed from relations)
+    - Includes creator info (id, name, avatar) and class info
+    - Filter by: category, classId, search query (title/content)
+    - Sort by: newest (default), oldest, most-liked, most-replied
+    - Returns isLiked boolean for current user
+  - `POST /api/discussions` — Create new discussion
+    - Requires authentication via `getSession()`
+    - Validates title and content
+    - Auto-detects user's first class if no classId provided
+    - Creates notifications for class members
+    - Returns created discussion with full relations
+
+- **File**: `src/app/api/discussions/[id]/route.ts` (NEW)
+  - `GET /api/discussions/[id]` — Get single discussion with replies and like info
+  - `DELETE /api/discussions/[id]` — Delete discussion (only creator or admin)
+
+- **File**: `src/app/api/discussions/[id]/replies/route.ts` (NEW)
+  - `POST /api/discussions/[id]/replies` — Add reply to discussion
+    - Requires authentication
+    - Notifies discussion creator on reply
+
+- **File**: `src/app/api/discussions/[id]/like/route.ts` (NEW)
+  - `POST /api/discussions/[id]/like` — Toggle like on discussion
+    - Requires authentication
+    - If already liked, unlike (delete like record)
+    - If not liked, like (create like record)
+    - Returns current like count and whether user liked
+
+### Task 3: Update DiscussionsPage.tsx
+- **File**: `src/components/pages/DiscussionsPage.tsx` (REWRITTEN)
+  - Replaced frontend-only announcements fetch with `/api/discussions` API calls
+  - Category-based filtering now uses server-side `category` parameter instead of `autoCategory()`
+  - Search triggers API re-fetch with `search` query parameter
+  - Like button calls `/api/discussions/[id]/like` API with loading state
+  - Reply submission calls `/api/discussions/[id]/replies` API with loading state
+  - Create discussion dialog posts to `/api/discussions` API
+  - Added delete button for creator/admin with loading state
+  - Added loading spinners (Loader2) for async operations
+  - Added proper error handling with toast notifications
+  - Total reactions and replies computed from API data
+  - Category count badges use API-returned category field
+  - Disabled states on buttons during API operations
+  - Preserved existing UI styling (glass-card, category-chip, gradient-text, etc.)
+
+Stage Summary:
+- Discussion threads are now fully persisted in the database
+- All CRUD operations work via REST API endpoints
+- Like toggle is persistent (unique per user per discussion)
+- Replies are stored in DiscussionReply table with proper relations
+- Notifications created for class members on new discussion and for creator on reply
+- Zero lint errors, dev server running cleanly
+
+## Completed This Round
+1. ✅ Discussion, DiscussionReply, DiscussionLike Prisma models
+2. ✅ GET/POST /api/discussions with pagination, filtering, search, sort
+3. ✅ GET/DELETE /api/discussions/[id] with creator/admin check
+4. ✅ POST /api/discussions/[id]/replies with notification
+5. ✅ POST /api/discussions/[id]/like with toggle logic
+6. ✅ DiscussionsPage.tsx rewritten to use API calls
+7. ✅ Loading states, error handling, toast notifications
+8. ✅ Delete discussion for creator/admin
+
+---
+Task ID: 15
+Agent: Main Agent (UI/UX Tidy Up)
+Task: Comprehensive UI/UX tidy up across all pages + new features
+
+Work Log:
+
+### Phase 1: Visual QA Assessment
+- Performed comprehensive QA using agent-browser across all 10+ pages
+- Used VLM (vision model) to analyze screenshots and identify specific UI/UX issues
+- Key issues identified: inconsistent button styling, sidebar active states, card padding, typography hierarchy, stat card progress bars showing 100%, notification badge too small
+
+### Phase 2: AppLayout & Global CSS Polish (Task ID: 2)
+- **Sidebar**: Thicker active indicator bar (w-1.5 h-7), icon background circles with gradient for active items, section dividers with labels (Utama, Pembelajaran, Admin), consistent vertical spacing
+- **Top Navbar**: Notification badge enlarged with gradient red background and shadow, profile avatar increased to w-8 h-8, consistent gap-3
+- **Footer**: 3-column layout with school logo, footer links, and tagline with better text contrast
+- **Mobile Bottom Nav**: Active state with gradient top bar and background pill, icons increased to w-6 h-6
+- **Global CSS**: Added `.btn-primary`, `.btn-secondary`, `.btn-ghost` button system, `.heading-1` through `.heading-4` typography, `.content-card`, `.badge-sm`, `.badge-md` utilities
+
+### Phase 3: Dashboard & Classes Page Polish (Task ID: 3)
+- **Dashboard**: Fixed stat card progress bars (added meaningful max values instead of always-100%), fixed welcome banner floating circles to use proper opacity values, increased quick action spacing (gap-4), increased announcement/assignment item padding (p-4), increased activity feed avatars (w-9 h-9), added gradient left border accent to motivational quote card
+- **Classes**: Increased card padding (p-5), improved avatar stack sizing (w-7 h-7), redesigned Quick Join section, enhanced empty state with illustration, increased grid gap (gap-5)
+
+### Phase 4: Remaining Pages Polish (Task ID: 4)
+- **Attendance**: Aligned class selector & export button, increased student list padding (p-4 md:p-5), consistent status button sizing, prominent save button (btn-gradient), better summary spacing
+- **Calendar**: Stronger date hover states, larger event indicator dots, better sidebar styling, month nav with btn-glass styling
+- **Resources**: Added class filter with category-chip components, added sort options dropdown, increased card padding (p-5 md:p-6), larger file type icons
+- **Submissions**: Better summary stats padding, enhanced empty state with "Reset Filter" CTA, export button with btn-glass styling
+- **Schedule**: Subject names with font-bold, better time label alignment, prominent "Tambah Jadwal" button
+- **Discussions**: Thread cards with p-5 md:p-6 padding, prominent "Diskusi Baru" button
+
+### Phase 5: New Features (Task ID: 5-a, 5-b)
+- **Discussion Thread Persistence**: Added Discussion, DiscussionReply, DiscussionLike Prisma models, created full REST API (GET/POST/DELETE /api/discussions, POST replies, POST like toggle), updated DiscussionsPage to use API instead of frontend-only state
+- **Student Progress Analytics Enhancement**: Enhanced ProgressAnalyticsPage with 4 tabs (Ringkasan with real data stats, Mata Pelajaran with per-subject breakdown, Tren with SVG bar/line charts, Peringatan with actionable alerts)
+- **Enhanced Analytics API**: Added submissionTrend, gradeTrend, alerts, upcomingDeadlines, studyHoursEstimate, attendanceRate
+- **Notification Enhancements**: Added read/unread filter buttons, 12 distinctive notification type icons with smart detection
+
+Stage Summary:
+- All UI/UX issues from QA assessment addressed
+- Consistent button system (primary/secondary/ghost) implemented
+- Consistent card styling (padding, radius, shadows) across all pages
+- Discussion threads now have full backend persistence
+- Student analytics page fully functional with real data
+- Notification page enhanced with read/unread filtering and type detection
+- Zero lint errors, dev server running cleanly
+
+## Current Project Status Assessment
+**Status**: ✅ Stable — Comprehensive UI/UX polish, new backend features, consistent design system
+**Version**: v11.0
+
+## Completed This Round
+1. ✅ Comprehensive visual QA with VLM analysis
+2. ✅ AppLayout sidebar, navbar, footer, mobile nav polish
+3. ✅ Global CSS button system (btn-primary, btn-secondary, btn-ghost)
+4. ✅ Global CSS typography system (heading-1 through heading-4)
+5. ✅ Dashboard stat card progress bar fix (meaningful max values)
+6. ✅ Dashboard welcome banner, quick actions, motivational card polish
+7. ✅ Classes page card padding, avatars, quick join, empty state polish
+8. ✅ Attendance page alignment, status buttons, save button polish
+9. ✅ Calendar page hover states, event indicators, sidebar polish
+10. ✅ Resources page class filter, sort options, card styling
+11. ✅ Submissions page summary stats, empty state, export button
+12. ✅ Discussion thread backend persistence (Prisma models + REST API)
+13. ✅ Student progress analytics with 4 tabs (Summary, Subjects, Trends, Alerts)
+14. ✅ Enhanced analytics API with trends and alerts
+15. ✅ Notification read/unread filter and 12 type-specific icons
+
+## Unresolved Issues / Risks
+1. File upload only saves to public/uploads (no cloud storage)
+2. No real-time WebSocket notifications (polling every 30s instead)
+3. No rate limiting on API endpoints
+4. Agent-browser has connectivity issues in this sandbox environment (works through preview panel)
+
+### Priority Recommendations for Next Phase
+1. Add bulk user import (CSV upload for admin)
+2. Add real-time WebSocket notification system
+3. Add assignment file download tracking
+4. Add more attendance features (bulk actions, weekly reports)
+5. Add system health dashboard improvements
+6. Performance optimization for large datasets

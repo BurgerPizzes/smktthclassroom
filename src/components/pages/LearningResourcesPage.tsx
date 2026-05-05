@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, Upload, Search, Download, File, FileImage,
   FileVideo, FileAudio, FileCode, FilePlus, X, Eye, ExternalLink, AlertCircle,
-  LayoutGrid, List, HardDrive, Sparkles
+  LayoutGrid, List, HardDrive, Sparkles, BookOpen
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { format } from 'date-fns'
@@ -210,6 +210,8 @@ export default function LearningResourcesPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [classFilter, setClassFilter] = useState('all')
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'name'>('newest')
   const [showUpload, setShowUpload] = useState(false)
   const [uploadForm, setUploadForm] = useState({ title: '', fileType: 'pdf', classId: '' })
   const [fileName, setFileName] = useState('')
@@ -360,11 +362,28 @@ export default function LearningResourcesPage() {
     return counts
   }, [resources])
 
-  const filtered = useMemo(() => resources.filter((r) => {
-    const matchSearch = r.title.toLowerCase().includes(search.toLowerCase())
-    const matchType = typeFilter === 'all' || r.fileType === typeFilter
-    return matchSearch && matchType
-  }), [resources, search, typeFilter])
+  const classFilterOptions = useMemo(() => {
+    const classes = new Map<string, string>()
+    resources.forEach((r) => {
+      classes.set(r.class.id, r.class.name)
+    })
+    return Array.from(classes.entries())
+  }, [resources])
+
+  const filtered = useMemo(() => {
+    let result = resources.filter((r) => {
+      const matchSearch = r.title.toLowerCase().includes(search.toLowerCase())
+      const matchType = typeFilter === 'all' || r.fileType === typeFilter
+      const matchClass = classFilter === 'all' || r.class.id === classFilter
+      return matchSearch && matchType && matchClass
+    })
+    result.sort((a, b) => {
+      if (sortBy === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      if (sortBy === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      return a.title.localeCompare(b.title)
+    })
+    return result
+  }, [resources, search, typeFilter, classFilter, sortBy])
 
   if (loading) {
     return (
@@ -416,43 +435,82 @@ export default function LearningResourcesPage() {
       </div>
 
       {/* Search & Filter */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--glass-text-muted)]" />
-          <input
-            type="text"
-            placeholder="Cari resource..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="glass-input pl-10"
-          />
-        </div>
-        <div className="flex gap-2 overflow-x-auto custom-scrollbar">
-          <button
-            onClick={() => setTypeFilter('all')}
-            className={`px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-              typeFilter === 'all' ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' : 'glass-btn text-[var(--glass-text-secondary)]'
-            }`}
+      <div className="glass-card p-4 md:p-5 space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--glass-text-muted)]" />
+            <input
+              type="text"
+              placeholder="Cari resource..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="glass-input pl-10"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--glass-text-muted)] hover:text-[var(--glass-text)]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          {/* Sort */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'name')}
+            className="glass-input text-sm w-auto sm:w-40"
           >
-            Semua <span className="ml-1 opacity-70">({resources.length})</span>
+            <option value="newest">Terbaru</option>
+            <option value="oldest">Terlama</option>
+            <option value="name">Nama A-Z</option>
+          </select>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => { setTypeFilter('all'); setClassFilter('all') }}
+            className={`category-chip ${typeFilter === 'all' && classFilter === 'all' ? 'active' : ''}`}
+          >
+            Semua ({resources.length})
           </button>
           {types.map((t) => {
             const config = getFileConfig(t)
+            const ConfigIcon = config.icon
             return (
               <button
                 key={t}
-                onClick={() => setTypeFilter(t)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  typeFilter === t ? 'bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white' : 'glass-btn text-[var(--glass-text-secondary)]'
-                }`}
+                onClick={() => { setTypeFilter(t); setClassFilter('all') }}
+                className={`category-chip ${typeFilter === t ? 'active' : ''}`}
               >
-                <config.icon className="w-3 h-3" />
-                {t.toUpperCase()}
-                <span className="opacity-70">({typeCounts[t] || 0})</span>
+                <ConfigIcon className="w-3 h-3" />
+                {t.toUpperCase()} ({typeCounts[t] || 0})
               </button>
             )
           })}
         </div>
+        {/* Class filter */}
+        {classFilterOptions.length > 1 && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs text-[var(--glass-text-muted)] flex items-center gap-1 mr-1">
+              <BookOpen className="w-3 h-3" /> Kelas:
+            </span>
+            <button
+              onClick={() => setClassFilter('all')}
+              className={`category-chip ${classFilter === 'all' ? 'active' : ''}`}
+            >
+              Semua
+            </button>
+            {classFilterOptions.map(([id, name]) => (
+              <button
+                key={id}
+                onClick={() => { setClassFilter(id); setTypeFilter('all') }}
+                className={`category-chip ${classFilter === id ? 'active' : ''}`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Resource Grid / List */}
@@ -473,11 +531,11 @@ export default function LearningResourcesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="interactive-card p-4"
+                  className="interactive-card p-5 md:p-6"
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-4">
                     {/* Large file type badge */}
-                    <div className={`file-type-badge w-12 h-12 bg-gradient-to-br ${config.gradient} ${config.shadow} shadow-lg shrink-0`}>
+                    <div className={`file-type-badge w-14 h-14 bg-gradient-to-br ${config.gradient} ${config.shadow} shadow-lg shrink-0`}>
                       <ConfigIcon className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -544,10 +602,10 @@ export default function LearningResourcesPage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 10 }}
                   transition={{ delay: idx * 0.03 }}
-                  className="interactive-card p-3 flex items-center gap-3"
+                  className="interactive-card p-4 flex items-center gap-4"
                 >
                   {/* Large file type badge */}
-                  <div className={`file-type-badge w-10 h-10 bg-gradient-to-br ${config.gradient} ${config.shadow} shadow-md shrink-0`}>
+                  <div className={`file-type-badge w-12 h-12 bg-gradient-to-br ${config.gradient} ${config.shadow} shadow-md shrink-0`}>
                     <ConfigIcon className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">

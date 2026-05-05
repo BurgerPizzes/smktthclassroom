@@ -207,13 +207,13 @@ export default function DashboardPage() {
   })()
 
   const statCards = [
-    { icon: BookOpen, label: 'Total Kelas', value: data?.stats.totalClasses || 0, color: 'from-blue-500 to-cyan-500', shadowColor: 'shadow-blue-500/20', bgColor: 'bg-[var(--badge-blue-bg)]', textColor: 'text-[var(--badge-blue-text)]' },
-    { icon: FileText, label: 'Tugas Aktif', value: data?.stats.totalAssignments || 0, color: 'from-purple-500 to-pink-500', shadowColor: 'shadow-purple-500/20', bgColor: 'bg-[var(--badge-purple-bg)]', textColor: 'text-[var(--badge-purple-text)]' },
+    { icon: BookOpen, label: 'Total Kelas', value: data?.stats.totalClasses || 0, max: 10, color: 'from-blue-500 to-cyan-500', shadowColor: 'shadow-blue-500/20', bgColor: 'bg-[var(--badge-blue-bg)]', textColor: 'text-[var(--badge-blue-text)]' },
+    { icon: FileText, label: 'Tugas Aktif', value: data?.stats.totalAssignments || 0, max: 20, color: 'from-purple-500 to-pink-500', shadowColor: 'shadow-purple-500/20', bgColor: 'bg-[var(--badge-purple-bg)]', textColor: 'text-[var(--badge-purple-text)]' },
     ...(isGuru
-      ? [{ icon: ClipboardList, label: 'Submissions Masuk', value: data?.stats.totalSubmissions || 0, color: 'from-amber-500 to-orange-500', shadowColor: 'shadow-amber-500/20', bgColor: 'bg-[var(--badge-amber-bg)]', textColor: 'text-[var(--badge-amber-text)]' }]
-      : [{ icon: CheckCircle2, label: 'Tugas Selesai', value: data?.stats.totalSubmissions || 0, color: 'from-emerald-500 to-green-500', shadowColor: 'shadow-emerald-500/20', bgColor: 'bg-[var(--badge-green-bg)]', textColor: 'text-[var(--badge-green-text)]' }]
+      ? [{ icon: ClipboardList, label: 'Submissions Masuk', value: data?.stats.totalSubmissions || 0, max: data?.stats.totalAssignments ? data.stats.totalAssignments * 5 : 50, color: 'from-amber-500 to-orange-500', shadowColor: 'shadow-amber-500/20', bgColor: 'bg-[var(--badge-amber-bg)]', textColor: 'text-[var(--badge-amber-text)]' }]
+      : [{ icon: CheckCircle2, label: 'Tugas Selesai', value: data?.stats.totalSubmissions || 0, max: data?.stats.totalAssignments || 10, color: 'from-emerald-500 to-green-500', shadowColor: 'shadow-emerald-500/20', bgColor: 'bg-[var(--badge-green-bg)]', textColor: 'text-[var(--badge-green-text)]' }]
     ),
-    { icon: Bell, label: 'Pengumuman', value: data?.announcements?.length || 0, color: 'from-rose-500 to-pink-500', shadowColor: 'shadow-rose-500/20', bgColor: 'bg-[var(--badge-red-bg)]', textColor: 'text-[var(--badge-red-text)]' },
+    { icon: Bell, label: 'Pengumuman', value: data?.announcements?.length || 0, max: 10, color: 'from-rose-500 to-pink-500', shadowColor: 'shadow-rose-500/20', bgColor: 'bg-[var(--badge-red-bg)]', textColor: 'text-[var(--badge-red-text)]' },
   ]
 
   return (
@@ -225,9 +225,9 @@ export default function DashboardPage() {
         className="welcome-banner"
       >
         {/* Floating decorative circles */}
-        <div className="welcome-banner-float absolute top-4 right-12 w-16 h-16 rounded-full bg-white/5 pointer-events-none" />
-        <div className="welcome-banner-float-2 absolute bottom-6 right-32 w-10 h-10 rounded-full bg-white/8 pointer-events-none" />
-        <div className="welcome-banner-float absolute top-8 right-52 w-6 h-6 rounded-full bg-white/10 pointer-events-none" />
+        <div className="welcome-banner-float absolute top-4 right-12 w-16 h-16 rounded-full pointer-events-none" style={{ background: 'rgba(255,255,255,0.05)' }} />
+        <div className="welcome-banner-float-2 absolute bottom-6 right-32 w-10 h-10 rounded-full pointer-events-none" style={{ background: 'rgba(255,255,255,0.08)' }} />
+        <div className="welcome-banner-float absolute top-8 right-52 w-6 h-6 rounded-full pointer-events-none" style={{ background: 'rgba(255,255,255,0.1)' }} />
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -343,7 +343,7 @@ export default function DashboardPage() {
                   <motion.div
                     className="progress-bar-fill"
                     initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((stat.value / Math.max(stat.value, 1)) * 100, 100)}%` }}
+                    animate={{ width: `${Math.min((stat.value / Math.max(stat.max, 1)) * 100, 100)}%` }}
                     transition={{ duration: 0.8, delay: idx * 0.1 + 0.3 }}
                     style={{ background: `linear-gradient(90deg, var(--subject-color, #667eea), var(--subject-color, #764ba2))` }}
                   />
@@ -429,7 +429,7 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="interactive-card p-3"
+                  className="interactive-card p-4"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
@@ -493,7 +493,7 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="interactive-card p-3"
+                    className="interactive-card p-4"
                     onClick={() => {
                       setPage('assignment-detail', { id: assignment.id })
                     }}
@@ -564,7 +564,7 @@ export default function DashboardPage() {
         className="glass-card p-6"
       >
         <h2 className="text-lg font-semibold text-[var(--glass-text)] mb-4">Aksi Cepat</h2>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
           {[
             ...(isGuru ? [{ icon: FileText, label: 'Buat Tugas', page: 'classes' as const, color: 'from-blue-500 to-cyan-500' }] : []),
             { icon: ClipboardCheck, label: 'Lihat Absensi', page: 'attendance' as const, color: 'from-emerald-500 to-green-500' },
@@ -607,9 +607,9 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                className="interactive-card p-3 flex items-center gap-3"
+                className="interactive-card p-4 flex items-center gap-3"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shrink-0 text-white text-xs font-bold">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shrink-0 text-white text-xs font-bold">
                   {ann.creator?.name?.charAt(0) || 'S'}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -632,9 +632,9 @@ export default function DashboardPage() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="interactive-card p-3 flex items-center gap-3"
+              className="interactive-card p-4 flex items-center gap-3"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0 text-white text-xs font-bold">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0 text-white text-xs font-bold">
                 <FileText className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">

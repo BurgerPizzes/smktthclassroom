@@ -103,9 +103,11 @@ export async function GET(request: NextRequest) {
           )
         : 0
 
-    // Class rank percentile (how this student compares to classmates)
-    // Simplified: based on average grade percentage
+    // Class rank percentile
     const classRankPercentile = await computeClassRank(analyticsUserId, classIds)
+
+    // Study hours estimate (based on submissions: each submission ≈ 1.5 hours of work)
+    const studyHoursEstimate = totalSubmissions * 1.5
 
     // Grade distribution
     const gradeDistribution = {
@@ -126,14 +128,16 @@ export async function GET(request: NextRequest) {
       else gradeDistribution['81-100']++
     })
 
-    // Subject performance
+    // Subject performance with upcoming deadlines
     const subjectMap = new Map<
       string,
       {
         name: string
+        classId: string
         grades: number[]
         total: number
         submitted: number
+        upcomingDeadlines: { title: string; dueDate: string; points: number }[]
       }
     >()
 
@@ -143,9 +147,11 @@ export async function GET(request: NextRequest) {
       if (!subjectMap.has(key)) {
         subjectMap.set(key, {
           name: subjectName,
+          classId: a.classId,
           grades: [],
           total: 0,
           submitted: 0,
+          upcomingDeadlines: [],
         })
       }
       const entry = subjectMap.get(key)!
@@ -157,6 +163,14 @@ export async function GET(request: NextRequest) {
           const pct = (sub.grade / (a.points || 100)) * 100
           entry.grades.push(Number.isFinite(pct) ? Math.round(pct) : 0)
         }
+      }
+      // Upcoming deadlines: not yet submitted and due date is in the future
+      if (a.submissions.length === 0 && new Date(a.dueDate) > new Date()) {
+        entry.upcomingDeadlines.push({
+          title: a.title,
+          dueDate: a.dueDate,
+          points: a.points,
+        })
       }
     })
 
@@ -171,11 +185,15 @@ export async function GET(request: NextRequest) {
         return {
           id: key,
           name: val.name,
+          classId: val.classId,
           averageGrade: avg,
           completion: completionPct,
           totalAssignments: val.total,
           gradedCount: val.grades.length,
           trend: avg >= 75 ? 'up' : avg >= 50 ? 'stable' : 'down',
+          upcomingDeadlines: val.upcomingDeadlines
+            .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+            .slice(0, 3),
         }
       }
     )
@@ -206,6 +224,133 @@ export async function GET(request: NextRequest) {
             )
           : 0,
     }
+
+    // ===== Trend data (last 30 days) =====
+    const now = new Date()
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    // Group submissions by date for the last 30 days
+    const submissionTrend: { date: string; count: number }[] = []
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
+      const dateStr = d.toISOString().split('T')[0]
+      const daySubmissions = submissions.filter((s) => {
+        const subDate = new Date(s.submittedAt).toISOString().split('T')[0]
+        return subDate === dateStr
+      })
+      submissionTrend.push({ date: dateStr, count: daySubmissions.length })
+    }
+
+    // Grade trend: group graded submissions by week for the last 8 weeks
+    const gradeTrend: { week: string; avgGrade: number; count: number }[] = []
+    for (let w = 7; w >= 0; w--) {
+      const weekEnd = new Date(now.getTime() - w * 7 * 24 * 60 * 60 * 1000)
+      const weekStart = new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000)
+      const weekGraded = gradedSubmissions.filter((s) => {
+        const subDate = new Date(s.submittedAt)
+        return subDate >= weekStart && subDate < weekEnd
+      })
+      const weekAvg = weekGraded.length > 0
+        ? Math.round(
+            weekGraded.reduce((sum, s) => {
+              const grade = Number.isFinite(s.grade) ? s.grade : 0
+              const points = s.assignment?.points || 100
+              return sum + (grade / points) * 100
+            }, 0) / weekGraded.length
+          )
+        : 0
+      gradeTrend.push({
+        week: `W${8 - w}`,
+        avgGrade: weekAvg,
+        count: weekGraded.length,
+      })
+    }
+
+    // ===== Alert data =====
+    const alerts: {
+      id: string
+      type: 'overdue' | 'low_grade' | 'missing_attendance' | 'upcoming'
+      title: string
+      description: string
+      severity: 'high' | 'medium' | 'low'
+      link?: string
+      className?: string
+    }[] = []
+
+    // Overdue assignments: not submitted and past due date
+    allAssignments.forEach((a) => {
+      if (a.submissions.length === 0 && new Date(a.dueDate) < now) {
+        alerts.push({
+          id: `overdue-${a.id}`,
+          type: 'overdue',
+          title: `Tugas terlambat: ${a.title}`,
+          description: `Tenggat sudah lewat pada ${new Date(a.dueDate).toLocaleDateString('id-ID')}`,
+          severity: 'high',
+          link: `assignment-detail:${a.id}`,
+          className: a.class?.name,
+        })
+      }
+    })
+
+    // Low grades: submissions with grade below 60% of points
+    gradedSubmissions.forEach((s) => {
+      if (Number.isFinite(s.grade) && s.assignment) {
+        const pct = (s.grade / (s.assignment.points || 100)) * 100
+        if (pct < 60) {
+          alerts.push({
+            id: `low-grade-${s.id}`,
+            type: 'low_grade',
+            title: `Nilai rendah: ${s.assignment.title}`,
+            description: `Nilai ${Math.round(s.grade)}/${s.assignment.points} (${Math.round(pct)}%). Perlu perbaikan.`,
+            severity: pct < 40 ? 'high' : 'medium',
+            link: `assignment-detail:${s.assignmentId}`,
+            className: s.assignment.class?.name,
+          })
+        }
+      }
+    })
+
+    // Missing attendance: check if there are attendance records missing for recent dates
+    // (simplified: if total attendance records < expected classes in the last 2 weeks)
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+    const recentAttendanceCount = attendance.filter(
+      (a) => new Date(a.date) >= twoWeeksAgo
+    ).length
+    if (classIds.length > 0 && recentAttendanceCount < classIds.length * 2) {
+      // Expect at least 2 attendance records per class in 2 weeks
+      alerts.push({
+        id: 'missing-attendance',
+        type: 'missing_attendance',
+        title: 'Kehadiran belum lengkap',
+        description: `Hanya ${recentAttendanceCount} catatan kehadiran dalam 2 minggu terakhir. Pastikan kehadiran tercatat.`,
+        severity: 'low',
+      })
+    }
+
+    // Upcoming deadlines (next 3 days)
+    allAssignments.forEach((a) => {
+      if (a.submissions.length === 0) {
+        const dueDate = new Date(a.dueDate)
+        const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+        if (daysUntilDue >= 0 && daysUntilDue <= 3) {
+          alerts.push({
+            id: `upcoming-${a.id}`,
+            type: 'upcoming',
+            title: `Tenggat mendekat: ${a.title}`,
+            description: daysUntilDue === 0
+              ? 'Tenggat hari ini!'
+              : `${daysUntilDue} hari lagi`,
+            severity: daysUntilDue === 0 ? 'high' : daysUntilDue === 1 ? 'medium' : 'low',
+            link: `assignment-detail:${a.id}`,
+            className: a.class?.name,
+          })
+        }
+      }
+    })
+
+    // Sort alerts by severity
+    const severityOrder = { high: 0, medium: 1, low: 2 }
+    alerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
 
     // Goals & milestones
     const goals = [
@@ -319,6 +464,8 @@ export async function GET(request: NextRequest) {
         totalAssignments,
         submittedAssignments,
         gradedCount: gradedSubmissions.length,
+        studyHoursEstimate,
+        attendanceRate: attendanceSummary.rate,
       },
       gradeDistribution,
       subjectPerformance,
@@ -327,6 +474,9 @@ export async function GET(request: NextRequest) {
       goals,
       strengths,
       weaknesses,
+      submissionTrend,
+      gradeTrend,
+      alerts,
       classWideAnalytics,
     })
   } catch (error) {

@@ -305,7 +305,7 @@ export default function SchedulePage() {
                 setFormEndTime('08:30')
                 setShowAddDialog(true)
               }}
-              className="btn-gradient px-4 py-2 text-sm flex items-center gap-2"
+              className="btn-gradient px-5 py-2.5 text-sm flex items-center gap-2 font-semibold"
             >
               <Plus className="w-4 h-4" /> Tambah Jadwal
             </button>
@@ -345,7 +345,7 @@ export default function SchedulePage() {
         <div className="min-w-[900px]">
           {/* Header Row */}
           <div className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 mb-2">
-            <div className="text-xs font-medium text-[var(--glass-text-muted)] text-center py-2">
+            <div className="text-xs font-semibold text-[var(--glass-text-secondary)] text-center py-2">
               Waktu
             </div>
             {DAY_NAMES.map((name, i) => {
@@ -379,8 +379,9 @@ export default function SchedulePage() {
                   className="grid grid-cols-[80px_repeat(7,1fr)] gap-1 border-b border-[var(--glass-border)]/30 last:border-b-0"
                 >
                   {/* Time Label */}
-                  <div className="text-xs text-[var(--glass-text-muted)] text-center py-3 flex flex-col items-center justify-start">
-                    <span className="font-medium">{time}</span>
+                  <div className="text-xs text-[var(--glass-text-secondary)] text-center py-3 flex flex-col items-center justify-start">
+                    <span className="font-semibold">{time}</span>
+                    <span className="text-[9px] text-[var(--glass-text-muted)]">{nextTime}</span>
                   </div>
 
                   {/* Day Cells */}
@@ -425,7 +426,7 @@ export default function SchedulePage() {
                             }}
                           >
                             <p
-                              className="text-xs font-semibold truncate"
+                              className="text-xs font-bold truncate"
                               style={{ color: block.color.text }}
                             >
                               {block.subject}

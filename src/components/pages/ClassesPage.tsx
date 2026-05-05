@@ -48,15 +48,16 @@ const SUBJECT_ICONS: Record<string, React.ElementType> = {
 
 const SUBJECT_COLORS: Record<string, { gradient: string; accent: string; iconBg: string; subjectClass: string }> = {
   matematika: { gradient: 'from-blue-500/20 to-cyan-500/20', accent: 'border-l-blue-500', iconBg: 'bg-blue-500', subjectClass: 'subject-blue' },
-  fisika: { gradient: 'from-purple-500/20 to-indigo-500/20', accent: 'border-l-purple-500', iconBg: 'bg-purple-500', subjectClass: 'subject-purple' },
+  fisika: { gradient: 'from-red-500/20 to-orange-500/20', accent: 'border-l-red-500', iconBg: 'bg-red-500', subjectClass: 'subject-rose' },
   kimia: { gradient: 'from-green-500/20 to-emerald-500/20', accent: 'border-l-green-500', iconBg: 'bg-green-500', subjectClass: 'subject-green' },
-  biologi: { gradient: 'from-emerald-500/20 to-teal-500/20', accent: 'border-l-emerald-500', iconBg: 'bg-emerald-500', subjectClass: 'subject-emerald' },
+  biologi: { gradient: 'from-teal-500/20 to-cyan-500/20', accent: 'border-l-teal-500', iconBg: 'bg-teal-500', subjectClass: 'subject-teal' },
   bahasa: { gradient: 'from-amber-500/20 to-yellow-500/20', accent: 'border-l-amber-500', iconBg: 'bg-amber-500', subjectClass: 'subject-amber' },
   inggris: { gradient: 'from-rose-500/20 to-pink-500/20', accent: 'border-l-rose-500', iconBg: 'bg-rose-500', subjectClass: 'subject-rose' },
-  komputer: { gradient: 'from-cyan-500/20 to-blue-500/20', accent: 'border-l-cyan-500', iconBg: 'bg-cyan-500', subjectClass: 'subject-cyan' },
-  seni: { gradient: 'from-pink-500/20 to-purple-500/20', accent: 'border-l-pink-500', iconBg: 'bg-pink-500', subjectClass: 'subject-pink' },
+  komputer: { gradient: 'from-indigo-500/20 to-violet-500/20', accent: 'border-l-indigo-500', iconBg: 'bg-indigo-500', subjectClass: 'subject-indigo' },
+  seni: { gradient: 'from-pink-500/20 to-fuchsia-500/20', accent: 'border-l-pink-500', iconBg: 'bg-pink-500', subjectClass: 'subject-pink' },
   olahraga: { gradient: 'from-orange-500/20 to-red-500/20', accent: 'border-l-orange-500', iconBg: 'bg-orange-500', subjectClass: 'subject-orange' },
-  tik: { gradient: 'from-teal-500/20 to-cyan-500/20', accent: 'border-l-teal-500', iconBg: 'bg-teal-500', subjectClass: 'subject-teal' },
+  tik: { gradient: 'from-cyan-500/20 to-sky-500/20', accent: 'border-l-cyan-500', iconBg: 'bg-cyan-500', subjectClass: 'subject-cyan' },
+  musik: { gradient: 'from-purple-500/20 to-fuchsia-500/20', accent: 'border-l-purple-500', iconBg: 'bg-purple-500', subjectClass: 'subject-purple' },
   default: { gradient: 'from-gray-500/20 to-slate-500/20', accent: 'border-l-gray-500', iconBg: 'bg-gray-500', subjectClass: '' },
 }
 
@@ -237,29 +238,31 @@ export default function ClassesPage() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card-glow p-4"
+          className="glass-card-glow p-5"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20 shrink-0">
-              <Zap className="w-5 h-5 text-white" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[var(--glass-text)]">Gabung Kelas Cepat</p>
+                <p className="text-xs text-[var(--glass-text-muted)]">Tempel kode kelas dari guru kamu</p>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-[var(--glass-text)]">Gabung Kelas Cepat</p>
-              <p className="text-xs text-[var(--glass-text-muted)]">Tempel kode kelas dari guru kamu</p>
-            </div>
-            <div className="flex items-center gap-2 flex-1 max-w-xs">
+            <div className="flex items-center gap-2 w-full sm:w-auto sm:flex-1 sm:max-w-sm sm:ml-auto">
               <input
                 type="text"
                 placeholder="Kode kelas..."
                 value={quickJoinCode}
                 onChange={(e) => setQuickJoinCode(e.target.value.toUpperCase())}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleQuickJoin() }}
-                className="glass-input text-center tracking-widest font-mono text-sm py-2"
+                className="glass-input text-center tracking-widest font-mono text-sm py-2.5 flex-1"
               />
               <button
                 onClick={handleQuickJoin}
                 disabled={!quickJoinCode.trim()}
-                className="btn-gradient text-sm px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+                className="btn-gradient text-sm px-5 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 whitespace-nowrap"
               >
                 <ArrowRight className="w-4 h-4" /> Gabung
               </button>
@@ -270,18 +273,26 @@ export default function ClassesPage() {
 
       {/* Search & Filter */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--glass-text-muted)]" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--glass-text-muted)]" />
         <input
           type="text"
-          placeholder="Cari kelas..."
+          placeholder="Cari kelas berdasarkan nama atau mata pelajaran..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="glass-input pl-10"
+          className="glass-input pl-10 py-2.5"
         />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-[var(--chip-bg)] flex items-center justify-center text-[var(--glass-text-muted)] hover:text-[var(--glass-text)] hover:bg-[var(--glass-hover-bg)] transition-all"
+          >
+            <span className="text-xs">\u2715</span>
+          </button>
+        )}
       </div>
 
       {/* Class Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <AnimatePresence>
           {filtered.map((cls, idx) => {
             const Icon = getSubjectIcon(cls.subject?.name)
@@ -321,12 +332,12 @@ export default function ClassesPage() {
                     </div>
                   )}
                 </div>
-                <div className="p-4">
+                <div className="p-5">
                   <h3 className="font-semibold text-[var(--glass-text)] text-sm truncate">{cls.name}</h3>
                   {cls.description && (
-                    <p className="text-xs text-[var(--glass-text-muted)] mt-1 line-clamp-2">{cls.description}</p>
+                    <p className="text-xs text-[var(--glass-text-muted)] mt-1.5 line-clamp-2">{cls.description}</p>
                   )}
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--glass-border)]">
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-[var(--glass-border)]">
                     {/* Stacked avatars */}
                     <div className="flex items-center gap-2">
                       {displayMembers.length > 0 ? (
@@ -334,7 +345,7 @@ export default function ClassesPage() {
                           {displayMembers.map((cu, i) => (
                             <div
                               key={cu.user.id}
-                              className={`w-6 h-6 rounded-full bg-gradient-to-br ${getAvatarColor(cu.user.name)} flex items-center justify-center text-white text-[10px] font-bold ring-2 ring-[var(--glass-bg)]`}
+                              className={`w-7 h-7 rounded-full bg-gradient-to-br ${getAvatarColor(cu.user.name)} flex items-center justify-center text-white text-[11px] font-bold ring-2 ring-[var(--glass-bg)]`}
                               title={cu.user.name}
                             >
                               {cu.user.avatar ? (
@@ -345,19 +356,19 @@ export default function ClassesPage() {
                             </div>
                           ))}
                           {extraCount > 0 && (
-                            <div className="w-6 h-6 rounded-full bg-[var(--chip-bg)] flex items-center justify-center text-[var(--glass-text-muted)] text-[10px] font-medium ring-2 ring-[var(--glass-bg)]">
+                            <div className="w-7 h-7 rounded-full bg-[var(--chip-bg)] flex items-center justify-center text-[var(--glass-text-muted)] text-[10px] font-medium ring-2 ring-[var(--glass-bg)]">
                               +{extraCount}
                             </div>
                           )}
                         </div>
                       ) : (
                         <span className="text-xs text-[var(--glass-text-muted)] flex items-center gap-1">
-                          <Users className="w-3 h-3" /> {cls._count?.classUsers || 0} anggota
+                          <Users className="w-3.5 h-3.5" /> {cls._count?.classUsers || 0} anggota
                         </span>
                       )}
                     </div>
                     <span className="text-xs text-[var(--glass-text-muted)] flex items-center gap-1">
-                      <BookOpen className="w-3 h-3" /> {cls._count?.assignments || 0} tugas
+                      <BookOpen className="w-3.5 h-3.5" /> {cls._count?.assignments || 0} tugas
                     </span>
                   </div>
                 </div>
@@ -369,27 +380,33 @@ export default function ClassesPage() {
 
       {/* Empty State */}
       {filtered.length === 0 && !loading && (
-        <div className="empty-state py-16">
-          <BookOpen className="w-16 h-16 mb-4" />
-          <h3 className="text-lg font-medium text-[var(--glass-text-secondary)] mb-2">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="empty-state py-20"
+        >
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--badge-purple-bg)] to-[var(--badge-blue-bg)] flex items-center justify-center mb-5">
+            <BookOpen className="w-10 h-10 text-[var(--badge-purple-text)]" />
+          </div>
+          <h3 className="text-xl font-semibold text-[var(--glass-text)] mb-2">
             {search ? 'Tidak ada kelas ditemukan' : 'Belum ada kelas'}
           </h3>
-          <p className="text-[var(--glass-text-muted)] text-sm">
-            {search ? 'Coba kata kunci lain' : 'Buat atau gabung ke kelas untuk memulai'}
+          <p className="text-[var(--glass-text-muted)] text-sm max-w-sm mx-auto">
+            {search ? 'Coba kata kunci lain atau kata kunci yang lebih umum' : 'Buat kelas baru atau gabung ke kelas yang sudah ada untuk mulai belajar'}
           </p>
           {!search && (
-            <div className="flex gap-2 mt-4">
-              <button onClick={() => setShowJoin(true)} className="btn-glass text-sm flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row gap-3 mt-6">
+              <button onClick={() => setShowJoin(true)} className="btn-glass text-sm flex items-center justify-center gap-2 px-5 py-2.5">
                 <Hash className="w-4 h-4" /> Gabung Kelas
               </button>
               {(user?.role === 'guru' || user?.role === 'admin') && (
-                <button onClick={() => setShowCreate(true)} className="btn-gradient text-sm flex items-center gap-2">
-                  <Plus className="w-4 h-4" /> Buat Kelas
+                <button onClick={() => setShowCreate(true)} className="btn-gradient text-sm flex items-center justify-center gap-2 px-5 py-2.5">
+                  <Plus className="w-4 h-4" /> Buat Kelas Baru
                 </button>
               )}
             </div>
           )}
-        </div>
+        </motion.div>
       )}
 
       {/* Create Class Dialog */}

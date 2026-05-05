@@ -30,6 +30,9 @@ model User {
   attendance     Attendance[]
   createdResources Resource[]
   schedules      Schedule[]
+  discussions      Discussion[]
+  discussionReplies DiscussionReply[]
+  discussionLikes  DiscussionLike[]
 }
 
 model Class {
@@ -50,6 +53,7 @@ model Class {
   resources     Resource[]
   attendance    Attendance[]
   schedules     Schedule[]
+  discussions   Discussion[]
 }
 
 model ClassUser {
@@ -205,4 +209,44 @@ model Attendance {
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([classId, userId, date])
+}
+
+model Discussion {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  category  String   @default("diskusi-umum") // pengumuman, tanya-jawab, diskusi-umum, tips-trik
+  priority  String?  @default("normal") // normal, high
+  classId   String?
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  creator  User              @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  class    Class?            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  replies  DiscussionReply[]
+  likes    DiscussionLike[]
+}
+
+model DiscussionReply {
+  id           String   @id @default(cuid())
+  content      String
+  discussionId String
+  createdBy    String
+  createdAt    DateTime @default(now())
+
+  discussion Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  creator    User       @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+}
+
+model DiscussionLike {
+  id           String   @id @default(cuid())
+  discussionId String
+  userId       String
+  createdAt    DateTime @default(now())
+
+  discussion Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([discussionId, userId])
 }
