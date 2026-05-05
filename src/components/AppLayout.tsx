@@ -196,16 +196,17 @@ function AppLayoutInner() {
     return item.roles.includes(user.role)
   })
 
-  // Group nav items by section
+  // Group nav items by section — merge items with the same section label
   const navSections: { label: string; items: NavItem[] }[] = []
-  let currentSection = ''
+  const sectionMap = new Map<string, number>()
   for (const item of filteredNav) {
     const section = item.section || ''
-    if (section !== currentSection) {
-      navSections.push({ label: section, items: [] })
-      currentSection = section
+    if (sectionMap.has(section)) {
+      navSections[sectionMap.get(section)!].items.push(item)
+    } else {
+      sectionMap.set(section, navSections.length)
+      navSections.push({ label: section, items: [item] })
     }
-    navSections[navSections.length - 1].items.push(item)
   }
 
   const handleLogout = () => {

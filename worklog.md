@@ -1826,3 +1826,31 @@ Stage Summary:
 - Zero lint errors
 - Dev server running cleanly
 - Committed and pushed to GitHub (BurgerPizzas/smktthclassroom.git)
+
+---
+Task ID: 15
+Agent: Main Agent
+Task: Fix 7 console errors shown in user screenshots
+
+Work Log:
+
+### Error 1: Duplicate React key warnings in AppLayout.tsx (6 of 7 errors)
+- **Root Cause**: After role-based filtering of NAV_ITEMS, the section grouping algorithm created separate sections every time the section label changed from the previous item. When a "Pembelajaran" section item (like "Mata Pelajaran" with roles: ['guru', 'admin']) was filtered out for students, the remaining items would alternate between "Utama" and "Pembelajaran" sections, creating duplicates.
+- **Example**: For a student, the filtered nav items were: Dashboard(Utama), Kelas(Utama), my-submissions(Utama), progress-analytics(Pembelajaran), schedule(Pembelajaran), etc. But because "Mata Pelajaran" (Pembelajaran) was filtered out, the grouping saw: Utama→Pembelajaran→Utama→Pembelajaran, creating 4 sections instead of 2.
+- **Fix**: Changed the section grouping algorithm from "create new section when section changes" to "merge items into existing section with same label using a Map". This ensures each section label appears only once.
+- **File**: `src/components/AppLayout.tsx` lines 199-210
+- **Before**: Sequential grouping with `currentSection` variable
+- **After**: Map-based grouping with `sectionMap` that tracks section indices by label
+
+### Error 2: useMemo is not defined in NotificationsPage.tsx (1 of 7 errors)
+- **Root Cause**: `useMemo` was used on lines 237, 252, and 261 but was not included in the React import statement.
+- **Fix**: Added `useMemo` to the destructured import from 'react'
+- **File**: `src/components/pages/NotificationsPage.tsx` line 3
+- **Before**: `import { useState, useEffect, useCallback } from 'react'`
+- **After**: `import { useState, useEffect, useCallback, useMemo } from 'react'`
+
+Stage Summary:
+- All 7 console errors fixed
+- Zero lint errors
+- Both fixes are minimal and targeted — no side effects
+
