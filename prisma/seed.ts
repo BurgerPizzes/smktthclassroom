@@ -1,5 +1,11 @@
-import { db } from '@/lib/db'
-import { hashPassword } from '@/lib/auth'
+import { PrismaClient } from '@prisma/client'
+import { hash } from 'bcryptjs'
+
+const db = new PrismaClient()
+
+async function hashPassword(password: string) {
+  return hash(password, 12)
+}
 
 async function seed() {
   console.log('🌱 Seeding database...')
@@ -82,6 +88,8 @@ async function seed() {
       name: 'XII RPL 1',
       description: 'Kelas XII Rekayasa Perangkat Lunak 1 — Fokus pemrograman web dan mobile',
       code: 'RPL12025',
+      grade: 12,
+      direction: 'RPL',
       subjectId: prog.id,
       createdBy: guru1.id,
     },
@@ -94,6 +102,8 @@ async function seed() {
       name: 'XII TKJ 1',
       description: 'Kelas XII Teknik Komputer dan Jaringan 1 — Fokus infrastruktur jaringan',
       code: 'TKJ12025',
+      grade: 12,
+      direction: 'TKJ',
       subjectId: jaringan.id,
       createdBy: guru2.id,
     },
@@ -106,6 +116,8 @@ async function seed() {
       name: 'XII MM 1',
       description: 'Kelas XII Multimedia 1 — Desain grafis, video, dan animasi',
       code: 'MM12025',
+      grade: 12,
+      direction: 'MM',
       subjectId: multimedia.id,
       createdBy: guru3.id,
     },
@@ -193,11 +205,11 @@ async function seed() {
 
   // ═══ Announcements ═══
   await db.announcement.createMany({ data: [
-    { title: 'Selamat Datang di SMKTTH Classroom! 🎉', content: 'Platform pembelajaran digital SMKTTH sudah siap digunakan. Silakan jelajahi fitur-fitur yang tersedia dan mulai belajar!', classId: class1.id, priority: 'high', createdBy: admin.id },
+    { title: 'Selamat Datang di SMKTTH Classroom!', content: 'Platform pembelajaran digital SMKTTH sudah siap digunakan. Silakan jelajahi fitur-fitur yang tersedia dan mulai belajar!', classId: class1.id, priority: 'high', createdBy: admin.id },
     { title: 'Jadwal UTS Semester Genap', content: 'Ujian Tengah Semester Genap akan dilaksanakan pada minggu ke-3 bulan depan. Harap persiapkan diri dengan baik.', classId: class2.id, priority: 'high', createdBy: admin.id },
     { title: 'Update Materi Pemrograman Web', content: 'Materi baru tentang React Hooks sudah ditambahkan. Silakan pelajari sebelum pertemuan minggu depan.', classId: class1.id, priority: 'normal', createdBy: guru1.id },
     { title: 'Lab Jaringan Tambahan', content: 'Lab jaringan tambahan akan dibuka setiap Rabu siang untuk praktik mandiri. Hubungi guru jika ingin mengikuti.', classId: class2.id, priority: 'normal', createdBy: guru2.id },
-    { title: 'Kompetisi Desain Poster 🏆', content: 'Akan diadakan kompetisi desain poster antar kelas. Pendaftaran dibuka sampai akhir bulan. Hadiah menarik menanti!', classId: class3.id, priority: 'high', createdBy: guru3.id },
+    { title: 'Kompetisi Desain Poster', content: 'Akan diadakan kompetisi desain poster antar kelas. Pendaftaran dibuka sampai akhir bulan. Hadiah menarik menanti!', classId: class3.id, priority: 'high', createdBy: guru3.id },
   ]})
 
   console.log('  ✅ Announcements created')
@@ -252,24 +264,18 @@ async function seed() {
   console.log('  ✅ Attendance records created')
 
   // ═══ Schedules ═══
-  // dayOfWeek: 1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jumat, 6=Sabtu, 7=Minggu
   const scheduleData = [
-    // Class 1 (XII RPL 1) — Pemrograman
     { classId: class1.id, subject: 'Pemrograman Web', dayOfWeek: 1, startTime: '07:00', endTime: '08:30', room: 'Lab RPL 1', createdBy: guru1.id },
     { classId: class1.id, subject: 'Basis Data', dayOfWeek: 1, startTime: '08:30', endTime: '10:00', room: 'Lab RPL 1', createdBy: guru1.id },
     { classId: class1.id, subject: 'Pemrograman Mobile', dayOfWeek: 2, startTime: '07:00', endTime: '08:30', room: 'Lab RPL 2', createdBy: guru1.id },
     { classId: class1.id, subject: 'Pemrograman Web', dayOfWeek: 3, startTime: '09:30', endTime: '11:00', room: 'Lab RPL 1', createdBy: guru1.id },
     { classId: class1.id, subject: 'Pemrograman Mobile', dayOfWeek: 4, startTime: '07:00', endTime: '08:30', room: 'Lab RPL 2', createdBy: guru1.id },
     { classId: class1.id, subject: 'Basis Data', dayOfWeek: 5, startTime: '08:30', endTime: '10:00', room: 'Lab RPL 1', createdBy: guru1.id },
-
-    // Class 2 (XII TKJ 1) — Jaringan
     { classId: class2.id, subject: 'Konfigurasi Jaringan', dayOfWeek: 1, startTime: '09:30', endTime: '11:00', room: 'Lab Jaringan', createdBy: guru2.id },
     { classId: class2.id, subject: 'Sistem Komputer', dayOfWeek: 2, startTime: '09:30', endTime: '11:00', room: 'Ruang Teori 2', createdBy: guru2.id },
     { classId: class2.id, subject: 'Konfigurasi Jaringan', dayOfWeek: 3, startTime: '07:00', endTime: '08:30', room: 'Lab Jaringan', createdBy: guru2.id },
     { classId: class2.id, subject: 'Administrasi Jaringan', dayOfWeek: 4, startTime: '09:30', endTime: '11:00', room: 'Lab Jaringan', createdBy: guru2.id },
     { classId: class2.id, subject: 'Sistem Komputer', dayOfWeek: 5, startTime: '07:00', endTime: '08:30', room: 'Ruang Teori 2', createdBy: guru2.id },
-
-    // Class 3 (XII MM 1) — Multimedia
     { classId: class3.id, subject: 'Desain Grafis', dayOfWeek: 1, startTime: '13:00', endTime: '14:30', room: 'Lab Multimedia', createdBy: guru3.id },
     { classId: class3.id, subject: 'Animasi 2D', dayOfWeek: 2, startTime: '13:00', endTime: '14:30', room: 'Lab Multimedia', createdBy: guru3.id },
     { classId: class3.id, subject: 'Desain Grafis', dayOfWeek: 3, startTime: '13:00', endTime: '14:30', room: 'Lab Multimedia', createdBy: guru3.id },
@@ -301,5 +307,5 @@ async function seed() {
 }
 
 seed()
-  .catch((e) => { console.error('❌ Seed error:', e); process.exit(1) })
+  .catch((e) => { console.error('Seed error:', e); process.exit(1) })
   .finally(() => db.$disconnect())
