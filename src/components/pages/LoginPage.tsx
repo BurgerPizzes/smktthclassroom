@@ -52,7 +52,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -67,13 +67,42 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
-  }, [email, password, setUser, setPage])
+  }, [email, password, rememberMe, setUser, setPage])
 
   const fillDemo = useCallback((account: typeof DEMO_ACCOUNTS[number]) => {
     setEmail(account.email)
     setPassword(account.password)
     toast.info(`Akun ${account.label} dipilih`)
   }, [])
+
+  // Expose login function for testing
+  useEffect(() => {
+    (window as any).__testLogin = async (email: string, password: string) => {
+      setLoading(true)
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        })
+        const data = await res.json()
+        if (!res.ok) {
+          toast.error(data.error || 'Login gagal')
+          return data
+        }
+        setUser(data.user)
+        setPage('dashboard')
+        toast.success(`Selamat datang, ${data.user.name}!`)
+        return data
+      } catch {
+        toast.error('Terjadi kesalahan jaringan')
+        return { error: 'network error' }
+      } finally {
+        setLoading(false)
+      }
+    }
+    return () => { delete (window as any).__testLogin }
+  }, [setUser, setPage])
 
   return (
     <div className="login-bg min-h-screen flex items-center justify-center p-4 relative">
@@ -238,6 +267,17 @@ export default function LoginPage() {
             </form>
 
             {/* Note: Registration is admin-only */}
+
+            {/* Register link */}
+            <p className="text-center text-sm text-white/40">
+              Belum punya akun?{' '}
+              <button
+                onClick={() => setPage('register')}
+                className="text-white/70 hover:text-white transition-colors font-medium"
+              >
+                Daftar
+              </button>
+            </p>
 
             {/* Demo Accounts */}
             <div className="border-t border-white/10 pt-4">

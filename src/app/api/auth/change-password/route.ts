@@ -25,13 +25,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User tidak ditemukan' }, { status: 404 })
     }
 
-    // Verify current password
-    let valid = false
-    try {
-      valid = await verifyPassword(currentPassword, dbUser.password)
-    } catch {
-      valid = currentPassword === dbUser.password
-    }
+    // Verify current password — no plain-text fallback
+    const valid = await verifyPassword(currentPassword, dbUser.password)
 
     if (!valid) {
       return NextResponse.json({ error: 'Password lama salah' }, { status: 400 })

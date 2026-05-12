@@ -22,6 +22,7 @@ export type PageName =
   | 'progress-analytics'
   | 'schedule'
   | 'system-health'
+  | 'register'
 
 interface UserInfo {
   id: string
@@ -83,3 +84,8 @@ export const useAppStore = create<AppState>((set) => ({
   setNotifCount: (count) =>
     set({ notifCount: count }),
 }))
+
+// Expose store for testing purposes
+if (typeof window !== "undefined") {
+  (window as any).__appStore = useAppStore
+}

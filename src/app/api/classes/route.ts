@@ -94,11 +94,18 @@ export async function POST(request: NextRequest) {
     // Use custom code if provided, otherwise generate random code
     let code = customCode?.trim()?.toUpperCase() || Math.random().toString(36).substring(2, 8).toUpperCase()
     
-    // Ensure code is unique
-    const existingCode = await db.class.findUnique({ where: { code } })
-    if (existingCode) {
+    // Ensure code is unique with retry loop (max 10 attempts for auto-generated codes)
+    const maxAttempts = 10
+    let attempt = 0
+    while (attempt < maxAttempts) {
+      const existingCode = await db.class.findUnique({ where: { code } })
+      if (!existingCode) break
       if (customCode) {
         return NextResponse.json({ error: 'Kode kelas sudah digunakan, gunakan kode lain' }, { status: 400 })
+      }
+      attempt++
+      if (attempt >= maxAttempts) {
+        return NextResponse.json({ error: 'Gagal membuat kode kelas unik, coba lagi' }, { status: 500 })
       }
       code = Math.random().toString(36).substring(2, 8).toUpperCase()
     }

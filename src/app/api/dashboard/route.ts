@@ -18,6 +18,16 @@ export async function GET() {
     let gradedCount = 0
     let averageGrade = 0
 
+    // Fetch user's class IDs once for non-admin users (reused for stats, announcements, assignments)
+    let classIds: string[] = []
+    if (user.role !== 'admin') {
+      const userClasses = await db.classUser.findMany({
+        where: { userId: user.id },
+        select: { classId: true },
+      })
+      classIds = userClasses.map(uc => uc.classId)
+    }
+
     if (user.role === 'admin') {
       totalClasses = await db.class.count()
       totalAssignments = await db.assignment.count({ where: { status: 'active' } })
@@ -32,18 +42,17 @@ export async function GET() {
       const validGrades = gradedSubs.map(s => s.grade).filter((g): g is number => g !== null && Number.isFinite(g))
       averageGrade = validGrades.length > 0 ? Math.round(validGrades.reduce((sum, g) => sum + g, 0) / validGrades.length) : 0
     } else if (user.role === 'guru') {
-      // Get teacher's classes
-      const teacherClasses = await db.classUser.findMany({
+      // Filter classIds to only those where user is guru
+      const guruClassIds = (await db.classUser.findMany({
         where: { userId: user.id, role: 'guru' },
         select: { classId: true },
-      })
-      const classIds = teacherClasses.map(tc => tc.classId)
-      totalClasses = classIds.length
+      })).map(tc => tc.classId)
+      totalClasses = guruClassIds.length
       totalAssignments = await db.assignment.count({
-        where: { status: 'active', classId: { in: classIds } },
+        where: { status: 'active', classId: { in: guruClassIds } },
       })
       const teacherAssignments = await db.assignment.findMany({
-        where: { classId: { in: classIds } },
+        where: { classId: { in: guruClassIds } },
         select: { id: true },
       })
       const assignmentIds = teacherAssignments.map(a => a.id)
@@ -55,7 +64,7 @@ export async function GET() {
       })
       // Count students in teacher's classes
       totalStudents = await db.classUser.count({
-        where: { classId: { in: classIds }, role: 'siswa' },
+        where: { classId: { in: guruClassIds }, role: 'siswa' },
       })
       gradedCount = await db.submission.count({
         where: { status: 'graded', assignmentId: { in: assignmentIds } },
@@ -68,11 +77,6 @@ export async function GET() {
       averageGrade = validGrades.length > 0 ? Math.round(validGrades.reduce((sum, g) => sum + g, 0) / validGrades.length) : 0
     } else {
       // Student
-      const studentClasses = await db.classUser.findMany({
-        where: { userId: user.id, role: 'siswa' },
-        select: { classId: true },
-      })
-      const classIds = studentClasses.map(sc => sc.classId)
       totalClasses = classIds.length
       totalAssignments = await db.assignment.count({
         where: { status: 'active', classId: { in: classIds } },
@@ -102,14 +106,9 @@ export async function GET() {
       averageGrade = myValidGrades.length > 0 ? Math.round(myValidGrades.reduce((sum, g) => sum + g, 0) / myValidGrades.length) : 0
     }
 
-    // Announcements from user's classes
+    // Announcements from user's classes (reuse classIds fetched above)
     let announcementsWhere: any = {}
     if (user.role !== 'admin') {
-      const userClasses = await db.classUser.findMany({
-        where: { userId: user.id },
-        select: { classId: true },
-      })
-      const classIds = userClasses.map(uc => uc.classId)
       announcementsWhere = { classId: { in: classIds } }
     }
 
@@ -123,14 +122,9 @@ export async function GET() {
       },
     })
 
-    // Assignments from user's classes
+    // Assignments from user's classes (reuse classIds fetched above)
     let assignmentsWhere: any = { status: 'active' }
     if (user.role !== 'admin') {
-      const userClasses = await db.classUser.findMany({
-        where: { userId: user.id },
-        select: { classId: true },
-      })
-      const classIds = userClasses.map(uc => uc.classId)
       assignmentsWhere.classId = { in: classIds }
     }
 

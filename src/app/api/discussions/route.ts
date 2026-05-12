@@ -4,6 +4,11 @@ import { getSession } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await getSession()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
     const classId = searchParams.get('classId')
@@ -22,9 +27,6 @@ export async function GET(request: NextRequest) {
         { content: { contains: search } },
       ]
     }
-
-    // Get current user to check liked status
-    const user = await getSession()
 
     let orderBy: any = { createdAt: 'desc' }
     if (sort === 'oldest') orderBy = { createdAt: 'asc' }
@@ -56,7 +58,7 @@ export async function GET(request: NextRequest) {
     const result = discussions.map((d) => {
       const replyCount = d.replies.length
       const likeCount = d.likes.length
-      const isLiked = user ? d.likes.some((l) => l.userId === user.id) : false
+      const isLiked = d.likes.some((l) => l.userId === user.id)
 
       return {
         id: d.id,

@@ -32,6 +32,7 @@ import ProgressAnalyticsPage from '@/components/pages/ProgressAnalyticsPage'
 import SchedulePage from '@/components/pages/SchedulePage'
 import SubjectsPage from '@/components/pages/SubjectsPage'
 import SystemHealthPage from '@/components/pages/SystemHealthPage'
+import RegisterPage from '@/components/pages/RegisterPage'
 
 interface NavItem {
   page: PageName
@@ -105,6 +106,7 @@ function PageRenderer() {
     'progress-analytics': ProgressAnalyticsPage,
     schedule: SchedulePage,
     'system-health': SystemHealthPage,
+    register: RegisterPage,
   }
 
   const Page = pages[currentPage] || DashboardPage
@@ -127,7 +129,7 @@ function AppLayoutInner() {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [notifCount, setNotifCount] = useState(0)
 
-  const isAuthPage = currentPage === 'login'
+  const isAuthPage = currentPage === 'login' || currentPage === 'register'
 
   // Check for existing session on mount
   useEffect(() => {
@@ -188,6 +190,7 @@ function AppLayoutInner() {
 
   // Auth pages: no sidebar/layout
   if (isAuthPage || !user) {
+    if (currentPage === 'register') return <RegisterPage />
     return <LoginPage />
   }
 

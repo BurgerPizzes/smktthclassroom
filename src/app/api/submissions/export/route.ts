@@ -44,7 +44,13 @@ export async function GET(request: NextRequest) {
       new Date(s.submittedAt).toLocaleDateString('id-ID')
     ])
 
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
+    const escapeCsvField = (field: any): string => {
+      const str = String(field ?? '')
+      const escaped = str.replace(/"/g, '""')
+      return `"${escaped}"`
+    }
+
+    const csv = [headers, ...rows].map(row => row.map(escapeCsvField).join(',')).join('\n')
 
     return new NextResponse(csv, {
       headers: {

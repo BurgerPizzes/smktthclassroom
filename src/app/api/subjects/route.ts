@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
     const user = await getSession()
     if (!user) {
@@ -125,7 +125,7 @@ export async function PUT(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     const user = await getSession()
     if (!user) {
@@ -135,8 +135,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Hanya admin yang dapat menghapus mata pelajaran' }, { status: 403 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    const id = request.nextUrl.searchParams.get('id')
 
     if (!id) {
       return NextResponse.json({ error: 'ID mata pelajaran wajib diisi' }, { status: 400 })

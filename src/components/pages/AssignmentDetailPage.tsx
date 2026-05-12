@@ -327,7 +327,7 @@ export default function AssignmentDetailPage() {
       <div className={`bg-gradient-to-r ${typeStyle.bg} p-6 md:p-8 border-b ${typeStyle.border}`}>
         <div className="relative z-10">
           <button
-            onClick={() => setPage('classes')}
+            onClick={() => setPage('class-detail', { id: assignment?.classId })}
             className="flex items-center gap-1 text-[var(--glass-text-secondary)] hover:text-[var(--glass-text)] text-sm mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" /> Kembali

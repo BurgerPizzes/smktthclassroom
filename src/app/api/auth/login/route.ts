@@ -4,7 +4,7 @@ import { verifyPassword, createSession } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { email, password, rememberMe } = await request.json()
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email dan password wajib diisi' }, { status: 400 })
@@ -16,20 +16,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 })
     }
 
-    // Try bcrypt comparison first, fallback to plain text for legacy seeds
-    let valid = false
-    try {
-      valid = await verifyPassword(password, user.password)
-    } catch {
-      valid = password === user.password
-    }
+    // Use bcrypt comparison only — no plain-text fallback
+    const valid = await verifyPassword(password, user.password)
 
     if (!valid) {
       return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 })
     }
 
-    // Create session
-    await createSession(user.id)
+    // Create session — 30 days if rememberMe, 1 day otherwise
+    const maxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 1
+    await createSession(user.id, maxAge)
 
     return NextResponse.json({
       user: {
